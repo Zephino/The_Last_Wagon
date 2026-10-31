@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 00.01.01
+Date: 10/31/2026
+Time: 11:38 PM
+
+### Changes
+- Added a "Pushing" owner rule to `CLAUDE.md`: finished work is always pushed to the `main` branch.
+
+### Reason
+The owner asked for all work to always be uploaded to `main`.
+
 ## Version 00.01.00
 Date: 10/31/2026
 Time: 11:37 PM
