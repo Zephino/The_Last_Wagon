@@ -10,6 +10,7 @@ const SCENES: Dictionary = {
 	"scavenge": "res://scenes/scavenge.tscn",
 	"end": "res://scenes/end.tscn",
 	"leaderboard": "res://scenes/leaderboard.tscn",
+	"settings": "res://scenes/settings.tscn",
 }
 const STARTING_MONEY := 600
 const FOOD_PER_PERSON_PER_DAY := 2

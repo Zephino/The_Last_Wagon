@@ -18,6 +18,17 @@ Every push to `main` rebuilds this automatically (see
 publishes it, usually within a few minutes. If the smoke test fails, the old
 version stays up. GitHub's Settings → Pages → Source must be **GitHub Actions**.
 
+### Install it like an app, and updates
+
+On the title screen, **Settings** has:
+- **Fullscreen** on/off.
+- **Install app:** in Chrome or Edge, installs the game with its own icon and
+  window. On iPhone/iPad: Share, then Add to Home Screen.
+- **Update app:** clears the saved copy and reloads the newest version.
+
+The game also updates itself: for 30 seconds after opening, it checks for a
+newer version online and switches to it (`web/update.js`).
+
 ## Play it on your computer
 
 1. Install **Godot 4.7** (the standard version, not .NET) from https://godotengine.org/download
@@ -100,6 +111,8 @@ The Worker has its own tests: `cd leaderboard-api && npm test`.
 | `scripts/scavenge/` | Level generator, player and enemies for scavenging levels |
 | `scripts/net/` | Talking to the online services (leaderboard, suggestions) |
 | `scripts/tests/` | The smoke test |
+| `web/` | `update.js`, copied into the web build to keep it up to date |
+| `icons/` | The app icon (pixel-art car) at the sizes the installed app needs |
 | `leaderboard-api/` | The Cloudflare Worker for the leaderboard and suggestions, with its own tests |
 
 All art is placeholder pixel art drawn from code, so there are no image files yet.

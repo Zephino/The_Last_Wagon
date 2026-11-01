@@ -1,5 +1,23 @@
 # Changelog
 
+## Version 00.01.09
+Date: 11/01/2026
+Time: 1:25 AM
+
+### Changes
+- New Settings screen (Settings button on the title screen) with:
+  - Fullscreen on/off.
+  - Install app: installs the web game like an app (Chrome/Edge show their install box; iPhone/iPad get Add to Home Screen steps). Shows "Installed" once it is.
+  - Update app: clears the saved copy of the game and reloads the newest version.
+  - On PC, Install and Update stay visible and say they're only needed in the web version.
+- The web game is now an installable app (export preset), with a pixel-art car icon (`icons/`, also the project icon).
+- Added `web/update.js` (from Mythriven/Wave Defence): for 30 seconds after opening, the game checks for a newer version and switches to it, and every game file is loaded for the matching version.
+- The web build writes the version into the page and checks the app files are there. The smoke test checks the Settings screen.
+- README explains installing and updating.
+
+### Reason
+The owner asked for a way in Settings to install the game and to update it.
+
 ## Version 00.01.08
 Date: 11/01/2026
 Time: 1:19 AM

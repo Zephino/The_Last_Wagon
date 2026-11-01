@@ -207,6 +207,15 @@ func _check_score_entry() -> void:
 
 func _check_online_screens() -> void:
 	_new_trip(13)
+	await _change_to("settings")
+	_expect(current_scene != null and current_scene.name == "Settings", "settings screen should load")
+	var labels: Array[String] = []
+	for node: Node in current_scene.find_children("*", "Button", true, false):
+		labels.append((node as Button).text)
+	for wanted: String in ["Fullscreen: Off", "Install app", "Update app", "Back"]:
+		_expect(labels.has(wanted), "settings should have a '%s' button (has %s)" % [wanted, labels])
+	current_scene.call("_on_update")
+	_expect(str(current_scene.get("_message")) == "Only needed in the web version.", "Update app on PC explains it's for the web version")
 	await _change_to("leaderboard")
 	_expect(current_scene != null and current_scene.name == "Leaderboard", "leaderboard screen should load")
 	await _change_to("end")

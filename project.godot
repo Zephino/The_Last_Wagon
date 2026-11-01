@@ -11,9 +11,10 @@ config_version=5
 [application]
 
 config/name="The Last Wagon"
-config/version="00.01.08"
+config/version="00.01.09"
 run/main_scene="res://scenes/title.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
+config/icon="res://icons/icon_512.png"
 
 [autoload]
 

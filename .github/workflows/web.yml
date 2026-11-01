@@ -67,6 +67,14 @@ jobs:
           godot --headless --path . --export-release "Web" build/web/index.html
           test -f build/web/index.html
           test -f build/web/index.pck
+          # Write the version into the page and add the updater (web/update.js), so
+          # browsers always load matching files and switch to new versions by themselves.
+          v=$(tr -d '[:space:]' < VERSION)
+          cp web/update.js build/web/update.js
+          sed -i "s/__LAST_WAGON_VERSION__/$v/g; s|src=\"index.js\"|src=\"index.js?v=$v\"|" build/web/index.html
+          grep -q "LAST_WAGON_VERSION=\"$v\"" build/web/index.html
+          grep -q "index.js?v=$v" build/web/index.html
+          test -f build/web/index.manifest.json
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -40,6 +40,7 @@ func _build_menu() -> void:
 	extras.alignment = BoxContainer.ALIGNMENT_CENTER
 	extras.add_child(UiKit.button("Leaderboard", Trip.go.bind("leaderboard"), 12))
 	extras.add_child(UiKit.button("Suggest an idea", _open_suggestions, 12))
+	extras.add_child(UiKit.button("Settings", Trip.go.bind("settings"), 12))
 	extras.add_child(UiKit.button("Quit", _on_quit, 12))
 	column.add_child(extras)
 	_quit_note = UiKit.label("", 11, UiKit.ACCENT)
