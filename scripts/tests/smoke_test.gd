@@ -38,6 +38,7 @@ func _run() -> void:
 	await _check_choice_event_on_road()
 	_check_stashes()
 	await _check_meta_screens()
+	await _check_cloud_sync()
 	_progress.use_test_file("")
 	DirAccess.remove_absolute(TEST_PROGRESS)
 	_finish()
@@ -396,6 +397,40 @@ func _check_meta_screens() -> void:
 	_expect(_trip.party.size() == 4, "the prepared party has 4 survivors")
 	await _change_to("awards")
 	_expect(current_scene != null and current_scene.name == "Awards", "awards screen should load")
+
+
+## Online progress: codes, merging (nothing lost), and the Settings section.
+## No real network use: the code is cleared again before anything is sent.
+func _check_cloud_sync() -> void:
+	var cloud: Node = root.get_node("CloudSync")
+	var old_code: Variant = PlayerPrefs.get_value("sync_code", "")
+	var old_email: Variant = PlayerPrefs.get_value("google_email", "")
+	_expect(cloud.call("normalize", "abcd efgh-jk23") == "ABCDEFGHJK23", "codes are tidied")
+	_expect(cloud.call("normalize", "ABCD-EFGH-JK2O") == "", "O isn't a code letter")
+	var made: String = cloud.call("new_code")
+	_expect(cloud.call("normalize", made) == made, "new codes are valid")
+	_expect(cloud.call("pretty", "ABCDEFGHJK23") == "ABCD-EFGH-JK23", "codes are shown in groups")
+	_progress.use_test_file(TEST_PROGRESS)
+	_progress.earn("first_steps")
+	_progress.add_stat("crates", 3)
+	var changed: bool = _progress.merge({"save_version": 1,
+		"awards": {"bunker": "2026-10-01T00:00:00", "first_steps": "2026-01-01T00:00:00", "made_up": "x"},
+		"stats": {"crates": 1, "enemies": 40}})
+	_expect(changed, "merging new progress changes things")
+	_expect(_progress.has_award("bunker") and _progress.has_award("first_steps"), "merging keeps awards from both")
+	_expect(not _progress.has_award("made_up"), "unknown awards are ignored")
+	_expect(_progress.stat("crates") == 3 and _progress.stat("enemies") == 40, "each total keeps the higher number")
+	_expect(not _progress.merge(_progress.to_save()), "merging the same progress changes nothing")
+	_expect(_progress.to_save().get("save_version") == 1, "the online copy has a save version")
+	await _change_to("settings")
+	var labels: Array[String] = []
+	for node: Node in current_scene.find_children("*", "Button", true, false):
+		labels.append((node as Button).text)
+	for wanted: String in ["Create sync code", "Use code", "Sign in with Google"]:
+		_expect(labels.has(wanted), "Online progress should offer '%s' (has %s)" % [wanted, labels])
+	_expect(not cloud.call("use_code", "nope"), "a bad code is refused")
+	PlayerPrefs.set_value("sync_code", old_code)
+	PlayerPrefs.set_value("google_email", old_email)
 
 
 func _finish() -> void:

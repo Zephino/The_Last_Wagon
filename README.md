@@ -72,8 +72,21 @@ Each award unlocks something for future trips:
 - **Car colors.**
 
 Some awards are secrets (hidden stashes and rare road events) and show as
-??? until found. Progress is saved on this device for now; online sync comes
-next. The leaderboard shows which perk each trip used.
+??? until found. The leaderboard shows which perk each trip used.
+
+### Online progress
+
+Progress is saved on your device, and can also follow you to other devices
+(Settings -> **Online progress**):
+- **Create sync code:** a private 12-letter code. On another device, type it
+  under "Already have a code" and press **Use code**.
+- **Sign in with Google:** every device signed in to the same Google account
+  shares progress (needs the owner's one-time Google setup, see
+  `leaderboard-api/README.md`).
+
+When two devices both have progress, they're combined: every award from both
+is kept, and each total keeps the higher number. It syncs when the game
+opens, after each award, at the end of each trip, and with **Sync now**.
 
 ## Leaderboard and suggestions
 
@@ -134,7 +147,7 @@ The Worker has its own tests: `cd leaderboard-api && npm test`.
 | `scripts/screens/` | The code for each screen, plus the map painter |
 | `scripts/road/` | Enemies on the road |
 | `scripts/scavenge/` | Level generator, player and enemies for scavenging levels |
-| `scripts/net/` | Talking to the online services (leaderboard, suggestions) |
+| `scripts/net/` | Talking to the online services (leaderboard, suggestions, online progress, Google sign-in) |
 | `scripts/tests/` | The smoke test |
 | `web/` | `update.js`, copied into the web build to keep it up to date |
 | `icons/` | The app icon (pixel-art car) at the sizes the installed app needs |

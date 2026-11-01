@@ -30,3 +30,13 @@ static func leaderboard_url() -> String:
 
 static func suggestion_url() -> String:
 	return "" if not is_set_up() else api_base() + "/suggestions"
+
+
+## Online progress by private sync code (leaderboard-api/src/cloud.js).
+static func cloud_url() -> String:
+	return "" if not is_set_up() else api_base() + "/cloud/save"
+
+
+## Sign in with Google (leaderboard-api/src/accounts.js), e.g. auth_url("start").
+static func auth_url(path: String) -> String:
+	return "" if not is_set_up() else api_base() + "/auth/" + path

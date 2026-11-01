@@ -303,3 +303,4 @@ func record_end() -> void:
 	end_recorded = true
 	Progress.record_trip_end(won, str(route.get("id", "")), int(days) + 1, standing_count(), party.size(),
 		not has_vehicle, apocalypse.is_mixed())
+	CloudSync.request_sync()

@@ -1,5 +1,22 @@
 # Changelog
 
+## Version 00.01.11
+Date: 11/01/2026
+Time: 1:54 AM
+
+### Changes
+- Online progress: awards and totals can follow you between devices. In Settings -> Online progress:
+  - Create sync code (a private 12-letter code), Copy code, and Use code (type a code from another device).
+  - Sign in with Google: devices signed in to the same Google account share progress. This needs the owner's one-time Google setup (steps in `leaderboard-api/README.md`).
+  - Sync now and Stop syncing.
+- Progress from two devices is combined: every award from both is kept and each total keeps the higher number. Syncs happen when the game opens, after each award, at the end of each trip, and on Sync now.
+- Worker: added online progress (`/cloud/save`, one private store per scrambled code), Sign in with Google (`/auth/*`) and a privacy page (`/privacy`), adapted from Mythriven. These use free Cloudflare Durable Objects, declared in `wrangler.toml`. The Worker has 35 tests.
+- Settings now has two columns: Game, and Online progress.
+- Smoke test checks codes, merging and the new Settings section. An end-to-end test with the Worker's code showed two devices sharing progress both ways.
+
+### Reason
+Round 2 of the roguelike update: the owner asked for progress to be saved online too, with both a sync code and Google sign-in.
+
 ## Version 00.01.10
 Date: 11/01/2026
 Time: 1:45 AM

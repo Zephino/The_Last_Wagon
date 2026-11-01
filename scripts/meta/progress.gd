@@ -61,6 +61,37 @@ func save_progress() -> void:
 	file.store_string(JSON.stringify({"awards": awards, "stats": stats}, "\t"))
 
 
+## What goes online (leaderboard-api/src/cloud.js needs "save_version").
+func to_save() -> Dictionary:
+	return {"save_version": 1, "awards": awards.duplicate(), "stats": stats.duplicate()}
+
+
+## Combines progress from another device: every award from both is kept
+## (with the earliest date) and each total keeps the higher number. Nothing
+## is ever lost. Returns true when anything here changed.
+func merge(save: Dictionary) -> bool:
+	var changed := false
+	var other_awards: Variant = save.get("awards", {})
+	if other_awards is Dictionary:
+		for award_id: String in other_awards:
+			if Unlocks.award(award_id).is_empty():
+				continue
+			var when := str(other_awards[award_id])
+			if not awards.has(award_id) or when < str(awards[award_id]):
+				awards[award_id] = when
+				changed = true
+	var other_stats: Variant = save.get("stats", {})
+	if other_stats is Dictionary:
+		for stat_id: String in other_stats:
+			var value := int(other_stats[stat_id])
+			if value > stat(stat_id):
+				stats[stat_id] = value
+				changed = true
+	if changed:
+		save_progress()
+	return changed
+
+
 func has_award(award_id: String) -> bool:
 	return awards.has(award_id)
 

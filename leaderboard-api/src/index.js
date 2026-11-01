@@ -4,6 +4,9 @@
  *   POST /leaderboard   send one finished trip; it is checked, then saved
  *   GET  /suggestions   whether suggestions are being accepted
  *   POST /suggestions   send one anonymous suggestion (becomes a GitHub Issue)
+ *   GET/PUT /cloud/save online progress, by private sync code (see cloud.js)
+ *   /auth/*             Sign in with Google (see accounts.js)
+ *   GET  /privacy       the privacy policy (see privacy.js)
  *
  * The Worker is the only thing that can write the board. It keeps the board in
  * Workers KV (fast) and commits leaderboard.json to the repo's `data` branch so
@@ -16,6 +19,12 @@
 
 import { addEntry, emptyBoard, isDuplicate, normalizeBoard, qualifies, validateScore } from "./board.js";
 import { handleSuggestionPost, suggestionStatus } from "./suggestions.js";
+import { handleCloud } from "./cloud.js";
+import { handleAuth } from "./accounts.js";
+import { privacyPage } from "./privacy.js";
+
+export { SaveVault } from "./cloud.js";
+export { AccountVault } from "./accounts.js";
 
 const MAX_BODY_BYTES = 8000;
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -168,6 +177,10 @@ export default {
   async fetch(request, env) {
     try {
       const url = new URL(request.url);
+      // Cloud progress and sign-in answer their own preflight and checks (no KV use).
+      if (url.pathname === "/cloud/save") return await handleCloud(request, env);
+      if (url.pathname.startsWith("/auth/")) return await handleAuth(request, env);
+      if (url.pathname === "/privacy") return privacyPage();
       if (request.method === "OPTIONS") {
         return new Response(null, { status: 204, headers: corsHeaders() });
       }

@@ -6,6 +6,9 @@ the game's online features:
 - **Leaderboard:** the best 100 trips, shown in the game from the title screen.
 - **Suggestions:** players send ideas from the title screen; each becomes a
   GitHub Issue on Zephino/The_Last_Wagon.
+- **Online progress:** awards and totals follow the player between devices,
+  by private sync code or Sign in with Google (`/cloud/save`, `/auth/*`).
+- **Privacy policy:** `/privacy` (needed for Google sign-in).
 
 ```
 Game --POST trip--> Worker (checks it) --> Workers KV (fast copy)
@@ -52,11 +55,62 @@ The storage (KV namespace `6ef4a5a8a8234494b84742cd4b044a0e`) is already in
    should see `{"_about": ..., "entries": []}`. Open
    `<your worker address>/suggestions`; you should see `{"accepting":true}`.
 
+## Online progress (sync codes)
+
+Works as soon as the Worker is deployed, with nothing to set up: each
+player's progress sits in its own **Durable Object** (`SaveVault`), named by
+a scrambled form of their private sync code. `wrangler.toml` declares the
+Durable Objects, so the automatic deploy creates them. They're on
+Cloudflare's free plan. If a deploy ever fails with a message about Durable
+Objects or migrations, open **Workers & Pages -> the-last-wagon ->
+Deployments**, copy the red message, and send it to Claude.
+
+## Sign in with Google (owner setup, about 15 minutes, free)
+
+Settings -> Online progress -> **Sign in with Google** only works after these
+steps. The **Client ID** and **Client secret** go into Cloudflare as
+secrets, never into the repo or a chat.
+
+1. Go to **https://console.cloud.google.com** and sign in.
+2. At the top, click the project picker -> **New project** -> name it
+   `The Last Wagon` -> **Create**. Make sure it's selected at the top.
+3. Search for **Google Auth Platform** (or menu -> APIs & Services -> OAuth
+   consent screen) -> **Get started**:
+   - App name: `The Last Wagon`; User support email: your email -> Next.
+   - Audience: **External** -> Next. Contact email: your email -> Next.
+   - Agree to the policy -> **Create**.
+   - Don't upload a logo (that starts a slow review; the game doesn't need one).
+4. Google Auth Platform -> **Clients** -> **Create client**:
+   - Application type: **Web application**; Name: `The Last Wagon Worker`.
+   - **Authorized redirect URIs** -> Add URI:
+     `https://the-last-wagon.thebotcoder.workers.dev/auth/callback`
+   - **Create**. A box shows the **Client ID** and **Client secret**. Keep
+     this tab open for step 6.
+5. Google Auth Platform -> **Branding**: Application home page
+   `https://zephino.github.io/The_Last_Wagon/`; privacy policy link
+   `https://the-last-wagon.thebotcoder.workers.dev/privacy`; authorized
+   domains `thebotcoder.workers.dev` and `zephino.github.io` -> Save. Then
+   **Audience** -> **Publish app** -> Confirm. (Until you do, only "test users"
+   you list there can sign in.) The game only asks for Google's basic sign-in
+   (openid and email), so Google doesn't need to review it.
+6. Cloudflare dashboard -> **Workers & Pages** -> **the-last-wagon** ->
+   **Settings** -> **Variables and Secrets** -> **Add**:
+   - Type **Secret**, Name `GOOGLE_CLIENT_ID`, Value: the Client ID -> add.
+   - Type **Secret**, Name `GOOGLE_CLIENT_SECRET`, Value: the Client secret -> add.
+   - **Deploy** (or Save). Secrets stay when the Worker updates from GitHub.
+7. Test: open the game -> Settings -> **Sign in with Google**. A Google page
+   opens; sign in; come back to the game. It should say "Signed in as ...".
+
+The privacy page lists `thebotcoder@gmail.com` as the contact for deleting
+data (the same as Mythriven's). Change `CONTACT` in `src/privacy.js` if you
+want a different one.
+
 ## Updating the Worker later
 
-When Claude changes files in `leaderboard-api/src/`, run the setup app again
-and click **5. Retry deploy only** (or run `npx wrangler deploy` in this
-folder). Your token and storage stay as they are.
+The Worker is connected to GitHub in Cloudflare, so it redeploys itself
+whenever `leaderboard-api/` changes on `main`. (Without that connection: run
+the setup app again and click **5. Retry deploy only**, or run
+`npx wrangler deploy` in this folder.) Your secrets and storage stay as they are.
 
 ## Protecting the `data` branch (recommended)
 
