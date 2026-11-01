@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 00.01.02
+Date: 11/01/2026
+Time: 12:06 AM
+
+### Changes
+- Added `.cursor/rules/think-before-acting.mdc`: ask questions until 95% sure, give a short summary and a 2-line plan, then wait for the owner's go-ahead before changing anything.
+
+### Reason
+The owner asked for this rule. `dependency.mdc` already referred to it by this filename, but the file was missing.
+
 ## Version 00.01.01
 Date: 10/31/2026
 Time: 11:38 PM
