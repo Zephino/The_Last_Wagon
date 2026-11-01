@@ -91,6 +91,32 @@ colors, road events and dangers:
 
 Store prices also climb the further along a route you are.
 
+## Weapons, enemies and bosses
+
+**Weapons** are found in crates, hidden stashes and from bosses. The party
+shares them for the whole trip; they're lost when the trip ends.
+
+| Weapon | Uses | Notes |
+|---|---|---|
+| Crowbar | nothing | melee; you always have it |
+| Pistol | 1 ammo | you always start with it |
+| Shotgun | 2 ammo | 5 pellets, short range |
+| Rifle | 1 ammo | long range, goes through 3 enemies |
+| Flamethrower | fuel | short-range flames (fuel for the car vs. your gun!) |
+| Nail Gun | scrap (1 per 4 nails) | very fast |
+
+When a weapon runs dry you switch to the crowbar automatically.
+
+**Enemies** take their look from the apocalypse, and tougher kinds appear as
+the trip goes on: walkers, Sprinters (fast, in pairs), Spitters (keep their
+distance and spit), Leapers (jump onto platforms) and Brutes (slow and tough).
+
+**Bosses** guard the last scavenging stop of medium and long routes, one per
+apocalypse: The Big Rotten (zombies), the Glowmother (fallout), The Overseer
+(aliens) and Patient Zero (plague). The exit stays shut until it's beaten.
+Each boss gives a big haul, a weapon, and an award (the zombie and fallout
+bosses unlock the Sawed-Off and Hunting Rifle perks).
+
 ## Roguelike: awards and unlocks
 
 Every trip is a fresh run (no saving in the middle of a trip). What you keep
@@ -138,8 +164,9 @@ is in `scripts/net/online_config.gd`.
 |---|---|---|
 | Move / steer | A D or ← → | Left stick / D-pad |
 | Jump | Space, W or ↑ | A |
-| Shoot (melee when out of ammo) | F, J or Ctrl | X |
-| Switch survivor | Tab or Q | Y / RB |
+| Shoot / swing the held weapon | F, J or Ctrl | X |
+| Switch weapon | Q / E, or 1-6 | LB / RB |
+| Switch survivor | Tab | Y |
 | Hotwire a car | E | B |
 | Leave a scavenging level | Esc | Start |
 
@@ -177,7 +204,7 @@ The Worker has its own tests: `cd leaderboard-api && npm test`.
 | `scripts/meta/` | Awards and unlocks (`unlocks.gd`), and the `Progress` autoload that saves them |
 | `scripts/screens/` | The code for each screen, plus the map painter |
 | `scripts/road/` | Enemies on the road |
-| `scripts/scavenge/` | Level generator, player and enemies for scavenging levels |
+| `scripts/scavenge/` | Level generator, player, enemies, bosses, weapons and shots for scavenging levels |
 | `scripts/net/` | Talking to the online services (leaderboard, suggestions, online progress, Google sign-in) |
 | `scripts/tests/` | The smoke test |
 | `web/` | `update.js`, copied into the web build to keep it up to date |

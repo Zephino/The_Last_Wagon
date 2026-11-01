@@ -7,7 +7,6 @@ const GRAVITY := 900.0
 const MAX_FALL_SPEED := 400.0
 const SHORT_HOP_SPEED := 90.0
 const HURT_COOLDOWN := 0.8
-const MELEE_COOLDOWN := 0.45
 const FALL_DAMAGE := 20
 const SIZE := Vector2(8, 14)
 
@@ -53,6 +52,7 @@ func _physics_process(delta: float) -> void:
 	_move(survivor, delta)
 	_fire_timer -= delta
 	_hurt_timer -= delta
+	_switch_weapons()
 	if Input.is_action_pressed("fire") and _fire_timer <= 0.0:
 		_fire(survivor)
 	if Input.is_action_just_pressed("switch_survivor") and Trip.switch_to_next_standing():
@@ -79,13 +79,22 @@ func _move(survivor: Survivor, delta: float) -> void:
 
 
 func _fire(survivor: Survivor) -> void:
-	if Trip.ammo > 0:
-		Trip.ammo -= 1
-		level.spawn_bullet(position + Vector2(facing * 6.0, -9.0), facing, survivor.shot_damage())
-		_fire_timer = survivor.fire_cooldown()
-	else:
-		level.melee(position, facing, survivor.shot_damage())
-		_fire_timer = MELEE_COOLDOWN
+	var wait := level.fire_weapon(position, facing, survivor)
+	if wait < 0.0:
+		# Out of what this weapon needs: grab the crowbar instead.
+		Trip.select_weapon("crowbar")
+		wait = level.fire_weapon(position, facing, survivor)
+	_fire_timer = wait
+
+
+func _switch_weapons() -> void:
+	if Input.is_action_just_pressed("prev_weapon"):
+		Trip.cycle_weapon(-1)
+	if Input.is_action_just_pressed("next_weapon"):
+		Trip.cycle_weapon(1)
+	for index: int in Weapons.ORDER.size():
+		if Input.is_action_just_pressed("weapon_%d" % (index + 1)):
+			Trip.select_weapon(Weapons.ORDER[index])
 
 
 func hurt(amount: int) -> void:

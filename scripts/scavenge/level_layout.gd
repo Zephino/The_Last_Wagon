@@ -20,18 +20,22 @@ var crate_spots: Array[Vector2] = []
 ## Where the golden crate sits, if this level has a hidden stash.
 var stash_spots: Array[Vector2] = []
 var player_start := Vector2(16, 0)
+## Boss levels: a short run of chunks, then a wide arena where the boss waits.
+var has_boss := false
+var boss_spot := Vector2.ZERO
+var arena := Rect2()
 var exit_spot := Vector2.ZERO
 var width := 0.0
 
 
-static func generate(rng: RandomNumberGenerator, difficulty: int) -> LevelLayout:
+static func generate(rng: RandomNumberGenerator, difficulty: int, boss := false) -> LevelLayout:
 	var layout := LevelLayout.new()
 	var x := -64.0
 	var height := 0
 	layout._ground(x, 224.0, height)
 	x = 160.0
 	var enemy_chance := minf(0.55 + difficulty * 0.04, 0.9)
-	var chunks := 9 + mini(difficulty, 7)
+	var chunks := 4 if boss else 9 + mini(difficulty, 7)
 	var stash_chunk := rng.randi_range(1, chunks - 2) if rng.randf() < STASH_CHANCE else -1
 	for index: int in chunks:
 		if index == stash_chunk:
@@ -49,6 +53,8 @@ static func generate(rng: RandomNumberGenerator, difficulty: int) -> LevelLayout
 				x = layout._platform_chunk(rng, x, height, enemy_chance)
 			_:
 				x = layout._building_chunk(rng, x, height, enemy_chance)
+	if boss:
+		x = layout._boss_arena(x, height)
 	var final_width := 14 * TILE
 	layout._ground(x, final_width, height)
 	layout.exit_spot = Vector2(x + 10 * TILE, _top(height))
@@ -131,4 +137,17 @@ func _stash_chunk(rng: RandomNumberGenerator, x: float, height: int) -> float:
 	stash_spots.append(Vector2(ledge_x + 12, ledge_y))
 	if rng.randf() < 0.5:
 		enemy_spots.append(Vector2(x + w - TILE, top))
+	return x + w
+
+
+## A wide, flat arena with two ledges to dodge onto. The boss waits in the middle.
+func _boss_arena(x: float, height: int) -> float:
+	var w := 32 * TILE
+	var top := _top(height)
+	_ground(x, w, height)
+	_solid(Rect2(x + 6 * TILE, top - 2 * TILE, 4 * TILE, 6), "platform")
+	_solid(Rect2(x + w - 10 * TILE, top - 2 * TILE, 4 * TILE, 6), "platform")
+	has_boss = true
+	boss_spot = Vector2(x + w * 0.6, top - 1)
+	arena = Rect2(x, top - 8 * TILE, w, 8 * TILE)
 	return x + w

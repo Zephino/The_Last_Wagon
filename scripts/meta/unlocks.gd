@@ -27,6 +27,14 @@ const AWARDS: Array[Dictionary] = [
 		"unlock": {"kind": "route", "id": "seattle_to_boston"}},
 	{"id": "finish_seattle_to_boston", "name": "Northern Lights", "how": "Finish Seattle to Boston.", "secret": false,
 		"unlock": {"kind": "color", "id": "frost_blue"}},
+	{"id": "boss_zombies", "name": "Rotten to the Core", "how": "Beat The Big Rotten (zombie boss).", "secret": false,
+		"unlock": {"kind": "perk", "id": "sawed_off"}},
+	{"id": "boss_fallout", "name": "Meltdown", "how": "Beat the Glowmother (fallout boss).", "secret": false,
+		"unlock": {"kind": "perk", "id": "hunting_rifle"}},
+	{"id": "boss_aliens", "name": "Close Encounter", "how": "Beat The Overseer (alien boss).", "secret": false,
+		"unlock": {"kind": "color", "id": "chrome"}},
+	{"id": "boss_plague", "name": "Herd Immunity", "how": "Beat Patient Zero (plague boss).", "secret": false,
+		"unlock": {"kind": "color", "id": "hazmat_yellow"}},
 	{"id": "full_house", "name": "Full House", "how": "Finish a route with all four survivors standing.", "secret": false,
 		"unlock": {"kind": "role", "id": "cook"}},
 	{"id": "on_foot", "name": "Who Needs Wheels", "how": "Finish a route on foot.", "secret": false,
@@ -61,6 +69,8 @@ const PERKS: Array[Dictionary] = [
 	{"id": "first_aid", "name": "First Aid Kit", "text": "Start with 2 medkits."},
 	{"id": "ammo_belt", "name": "Ammo Belt", "text": "Start with 40 rounds of ammo."},
 	{"id": "beater", "name": "Old Beater", "text": "Start with a beat-up car (45% condition)."},
+	{"id": "sawed_off", "name": "Sawed-Off", "text": "Start with a shotgun."},
+	{"id": "hunting_rifle", "name": "Hunting Rifle", "text": "Start with a rifle."},
 ]
 
 ## Car colors (looks only). "classic_red" is always available.
@@ -74,6 +84,8 @@ const COLORS: Array[Dictionary] = [
 	{"id": "ice_cream_pink", "name": "Ice Cream Pink", "color": Color("e890b0")},
 	{"id": "desert_tan", "name": "Desert Tan", "color": Color("b8945a")},
 	{"id": "frost_blue", "name": "Frost Blue", "color": Color("7aa8d0")},
+	{"id": "chrome", "name": "Chrome", "color": Color("c8d0d8")},
+	{"id": "hazmat_yellow", "name": "Hazmat Yellow", "color": Color("e0d030")},
 ]
 
 ## Unlocked from the very first trip.

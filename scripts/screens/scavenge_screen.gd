@@ -5,9 +5,8 @@ extends Node2D
 ## hand over to the next one; if everyone goes down, you retreat.
 
 const KILL_Y := 260.0
-const BULLET_SPEED := 280.0
-const BULLET_RANGE := 240.0
-const MELEE_RANGE := 18.0
+## Chance that a normal crate holds a weapon you don't have yet.
+const WEAPON_CRATE_CHANCE := 0.1
 const SCOUT_LOOT_BONUS := 1.3
 const END_DELAY := 2.5
 const TIME_SPENT_DAYS := 0.5
@@ -15,11 +14,14 @@ const BANNER_TIME := 3.0
 
 var player: ScavPlayer
 var enemies: Array[ScavEnemy] = []
+var shots: Shots
+var boss: ScavBoss
 var _layout: LevelLayout
 var _region := Regions.MIDWEST
 var _rng := RandomNumberGenerator.new()
 var _crates: Array[Dictionary] = []
-var _bullets: Array[Dictionary] = []
+var _exit_sign: Sprite2D
+var _difficulty := 0
 var _exit_rect := Rect2()
 var _loot: Dictionary = {}
 var _finished := false
@@ -29,6 +31,9 @@ var _banner_time := 0.0
 var _hud_party: Label
 var _hud_supplies: Label
 var _hud_banner: Label
+var _hud_weapon: Label
+var _boss_bar: ProgressBar
+var _boss_label: Label
 
 
 func _ready() -> void:
@@ -40,13 +45,21 @@ func _ready() -> void:
 		return
 	_rng.seed = Trip.rng.randi()
 	_region = Regions.of_stop(Trip.current_stop())
-	_layout = LevelLayout.generate(_rng, Trip.stop_index + int(Regions.info(_region)["level_bonus"]))
+	_difficulty = Trip.stop_index + int(Regions.info(_region)["level_bonus"])
+	_layout = LevelLayout.generate(_rng, _difficulty, Trip.is_boss_stop())
+	shots = Shots.new()
+	shots.level = self
 	_build_world()
 	_spawn_crates()
 	_spawn_player()
+	add_child(shots)
 	_spawn_enemies()
 	_build_hud()
-	_banner("Scavenging %s. Open crates, then reach the EXIT sign." % Trip.current_stop()["city"])
+	if _layout.has_boss:
+		_spawn_boss()
+		_banner("Something big is waiting in %s. Beat it to open the EXIT." % Trip.current_stop()["city"])
+	else:
+		_banner("Scavenging %s. Open crates, then reach the EXIT sign." % Trip.current_stop()["city"])
 
 
 func _process(delta: float) -> void:
@@ -57,9 +70,8 @@ func _process(delta: float) -> void:
 			player = null
 			Trip.go(_end_screen)
 		return
-	_update_bullets(delta)
 	_check_crates()
-	if player.box().intersects(_exit_rect):
+	if exit_open() and player.box().intersects(_exit_rect):
 		_end("You slip out of %s with your loot." % Trip.current_stop()["city"])
 	elif Input.is_action_just_pressed("back"):
 		_end("You leave early. Discretion, valor, something like that.")
@@ -68,6 +80,11 @@ func _process(delta: float) -> void:
 
 func is_finished() -> bool:
 	return _finished
+
+
+## The exit only opens once the boss (if any) is beaten.
+func exit_open() -> bool:
+	return boss == null
 
 
 # --- Building the level ---------------------------------------------------
@@ -91,7 +108,9 @@ func _build_world() -> void:
 		shape.position = rect.get_center()
 		solid_body.add_child(shape)
 		add_child(_solid_visual(str(solid["kind"]), ground, top, rect))
-	add_child(PixelArt.standing(PixelArt.exit_sign(), _layout.exit_spot))
+	_exit_sign = PixelArt.standing(PixelArt.exit_sign(), _layout.exit_spot)
+	_exit_sign.visible = not _layout.has_boss
+	add_child(_exit_sign)
 	_exit_rect = Rect2(_layout.exit_spot - Vector2(8, 24), Vector2(16, 24))
 
 
@@ -132,47 +151,83 @@ func _spawn_player() -> void:
 
 func _spawn_enemies() -> void:
 	for spot: Vector2 in _layout.enemy_spots:
-		var enemy := ScavEnemy.new()
-		enemy.setup(self, Apocalypse.enemy_stats(Trip.apocalypse.pick_threat(_rng)), spot - Vector2(0, 1))
-		add_child(enemy)
-		enemies.append(enemy)
+		var kind := pick_enemy_kind(_rng, _difficulty)
+		spawn_enemy_near(spot - Vector2(0, 1), kind)
+		if kind == "runner":
+			spawn_enemy_near(spot + Vector2(14, -1), "runner")
+
+
+## Which kind of enemy to place: tougher kinds show up as the trip goes on.
+static func pick_enemy_kind(rng: RandomNumberGenerator, difficulty: int) -> String:
+	var weights := {"walker": 5.0, "runner": 2.0 if difficulty >= 1 else 0.0, "shooter": 1.6 if difficulty >= 2 else 0.0,
+		"jumper": 1.2 if difficulty >= 3 else 0.0, "tank": 1.0 if difficulty >= 4 else 0.0}
+	var total := 0.0
+	for kind: String in weights:
+		total += float(weights[kind])
+	var roll := rng.randf() * total
+	for kind: String in weights:
+		roll -= float(weights[kind])
+		if roll <= 0.0:
+			return kind
+	return "walker"
+
+
+func spawn_enemy_near(at: Vector2, kind: String) -> ScavEnemy:
+	var enemy := ScavEnemy.new()
+	enemy.setup(self, Apocalypse.enemy_stats(Trip.apocalypse.pick_threat(_rng)), at, kind)
+	add_child(enemy)
+	enemies.append(enemy)
+	return enemy
+
+
+func _spawn_boss() -> void:
+	boss = ScavBoss.new()
+	var threat := Trip.apocalypse.main_threat()
+	var type_id: String = ["zombies", "fallout", "aliens", "plague"][threat]
+	boss.setup_boss(self, Apocalypse.enemy_stats(threat), _layout.boss_spot, type_id, _layout.arena, _difficulty)
+	add_child(boss)
+	enemies.append(boss)
+
+
+func on_boss_beaten(beaten: ScavBoss) -> void:
+	if boss != beaten:
+		return
+	enemies.erase(beaten)
+	beaten.queue_free()
+	boss = null
+	_exit_sign.visible = true
+	Progress.add_stat("enemies")
+	Progress.add_stat("bosses")
+	Progress.earn(beaten.award_id())
+	var parts: Array[String] = [_gain("food", 40), _gain("ammo", 40), _gain("medkits", 2), _gain("money", 150)]
+	var weapon := Weapons.random_new(_rng, Trip.weapons)
+	if weapon != "" and Trip.add_weapon(weapon):
+		parts.append("a %s" % Weapons.display_name(weapon))
+	_banner("%s is down! %s. The EXIT is open." % [beaten.display_name(), ", ".join(parts)])
 
 
 # --- Combat ---------------------------------------------------------------
 
-func spawn_bullet(from: Vector2, direction: int, damage: int) -> void:
-	var sprite := Sprite2D.new()
-	sprite.texture = PixelArt.bullet()
-	sprite.position = from
-	add_child(sprite)
-	_bullets.append({"node": sprite, "direction": direction, "damage": damage, "start": from.x})
+## Uses the held weapon. Returns how long until it can be used again, or
+## -1 if there's nothing to shoot it with (the caller switches to the crowbar).
+func fire_weapon(from: Vector2, facing: int, survivor: Survivor) -> float:
+	var weapon_id := Trip.current_weapon()
+	var weapon := Weapons.info(weapon_id)
+	var damage := int(weapon["damage"]) * survivor.shot_damage()
+	var gunner_speed := 0.7 if survivor.role == Survivor.Role.GUNNER else 1.0
+	if Weapons.is_melee(weapon_id):
+		melee(from, facing, damage, float(weapon["melee"]))
+		return float(weapon["cooldown"])
+	if not Trip.spend(str(weapon["supply"]), float(weapon["cost"])):
+		return -1.0
+	shots.fire_player(from + Vector2(facing * 6.0, -9.0), facing, weapon, damage)
+	return float(weapon["cooldown"]) * gunner_speed
 
 
-func _update_bullets(delta: float) -> void:
-	var space := get_world_2d().direct_space_state
-	for bullet: Dictionary in _bullets.duplicate():
-		var node: Sprite2D = bullet["node"]
-		var direction: int = bullet["direction"]
-		var to := node.position + Vector2(direction * BULLET_SPEED * delta, 0)
-		var query := PhysicsRayQueryParameters2D.create(node.position, to, 1 | 4)
-		var hit := space.intersect_ray(query)
-		var spent := absf(to.x - float(bullet["start"])) > BULLET_RANGE
-		if not hit.is_empty():
-			var enemy := hit["collider"] as ScavEnemy
-			if enemy != null:
-				enemy.hit(int(bullet["damage"]), direction)
-			spent = true
-		if spent:
-			_bullets.erase(bullet)
-			node.queue_free()
-		else:
-			node.position = to
-
-
-func melee(from: Vector2, facing: int, damage: int) -> void:
+func melee(from: Vector2, facing: int, damage: int, reach := 18.0) -> void:
 	for enemy: ScavEnemy in enemies:
 		var offset := enemy.position - from
-		if offset.x * facing >= -4.0 and absf(offset.x) < MELEE_RANGE and absf(offset.y) < 16.0:
+		if offset.x * facing >= -4.0 and absf(offset.x) < reach + enemy.box().size.x / 2.0 and absf(offset.y) < 16.0 + enemy.box().size.y / 2.0:
 			enemy.hit(damage, facing)
 			return
 
@@ -209,6 +264,12 @@ func _check_crates() -> void:
 
 
 func _open_crate() -> void:
+	if _rng.randf() < WEAPON_CRATE_CHANCE:
+		var found := Weapons.random_new(_rng, Trip.weapons)
+		if found != "" and Trip.add_weapon(found):
+			Progress.add_stat("crates")
+			_banner("Crate: a %s! Press Q/E or %d to use it." % [Weapons.display_name(found), Weapons.ORDER.find(found) + 1])
+			return
 	var roll := _rng.randf()
 	var supply := "medkits"
 	var amount := 1
@@ -243,6 +304,9 @@ func _open_stash() -> void:
 	parts.append(_gain("ammo", _rng.randi_range(20, 35)))
 	parts.append(_gain("medkits", 1))
 	parts.append(_gain("money", _rng.randi_range(40, 90)))
+	var weapon := Weapons.random_new(_rng, Trip.weapons)
+	if weapon != "" and Trip.add_weapon(weapon):
+		parts.append("a %s" % Weapons.display_name(weapon))
 	Progress.add_stat("stashes")
 	_banner("HIDDEN STASH! " + ", ".join(parts))
 
@@ -289,7 +353,15 @@ func _build_hud() -> void:
 	_hud_banner = UiKit.wrapped("", 12, UiKit.TEXT, 460)
 	_hud_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	UiKit.pin(_hud_banner, root, Vector2(0.5, 0), Vector2(-230, 70))
-	var hint := UiKit.label("A/D move   SPACE jump   F shoot   TAB switch survivor   ESC leave", 10, UiKit.DIM)
+	_hud_weapon = UiKit.label("", 11, UiKit.ACCENT)
+	UiKit.pin(_hud_weapon, root, Vector2(1, 0), Vector2(-330, 26), Vector2(320, 0))
+	_hud_weapon.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_boss_label = UiKit.label("", 11, UiKit.DANGER)
+	_boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	UiKit.pin(_boss_label, root, Vector2(0.5, 0), Vector2(-150, 40), Vector2(300, 0))
+	_boss_bar = UiKit.bar(1, 1, UiKit.DANGER, Vector2(300, 8))
+	UiKit.pin(_boss_bar, root, Vector2(0.5, 0), Vector2(-150, 56), Vector2(300, 8))
+	var hint := UiKit.label("A/D move  SPACE jump  F shoot  Q/E or 1-6 weapon  TAB survivor  ESC leave", 10, UiKit.DIM)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	UiKit.pin(hint, root, Vector2(0.5, 1), Vector2(-260, -22), Vector2(520, 0))
 
@@ -303,6 +375,18 @@ func _refresh_hud() -> void:
 		lines.append("%s %s (%s)  %s" % [marker, survivor.name, survivor.role_name(), status])
 	_hud_party.text = "\n".join(lines)
 	_hud_supplies.text = UiKit.supplies_text()
+	var kit: Array[String] = []
+	for weapon_id: String in Trip.weapons:
+		kit.append(("[%s]" if weapon_id == Trip.current_weapon() else "%s") % Weapons.display_name(weapon_id))
+	var held := Trip.current_weapon()
+	var supply := str(Weapons.info(held)["supply"])
+	_hud_weapon.text = "%s    %s" % [Weapons.hud_text(held, Trip.get_supply(supply) if supply != "" else 0.0), " ".join(kit)]
+	_boss_label.visible = boss != null
+	_boss_bar.visible = boss != null
+	if boss != null:
+		_boss_label.text = boss.display_name()
+		_boss_bar.max_value = boss.max_health
+		_boss_bar.value = maxi(0, boss.health)
 	_hud_banner.visible = _banner_time > 0.0
 
 

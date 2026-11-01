@@ -41,6 +41,9 @@ func _run() -> void:
 	_check_stashes()
 	await _check_meta_screens()
 	await _check_cloud_sync()
+	_check_weapons()
+	await _check_enemy_kinds()
+	await _check_bosses()
 	_progress.use_test_file("")
 	DirAccess.remove_absolute(TEST_PROGRESS)
 	_finish()
@@ -510,6 +513,126 @@ func _check_cloud_sync() -> void:
 	_expect(not cloud.call("use_code", "nope"), "a bad code is refused")
 	PlayerPrefs.set_value("sync_code", old_code)
 	PlayerPrefs.set_value("google_email", old_email)
+
+
+## Weapons: each one pays with the right supply, and an empty one falls
+## back to the crowbar.
+func _check_weapons() -> void:
+	_new_trip(60)
+	_expect(_trip.weapons.size() == 2 and _trip.weapons.has("crowbar") and _trip.current_weapon() == "pistol", "trips start with a pistol (in hand) and a crowbar")
+	_trip.ammo = 10
+	_expect(_trip.spend("ammo", 2.0) and _trip.ammo == 8, "the shotgun's 2 ammo is paid")
+	_trip.scrap = 1
+	for shot: int in 4:
+		_expect(_trip.spend("scrap", 0.25), "nails cost a quarter scrap each")
+	_expect(_trip.scrap == 0, "4 nails used 1 scrap (left %d)" % _trip.scrap)
+	_expect(not _trip.spend("scrap", 0.25), "no scrap, no nails")
+	_trip.fuel = 0.1
+	_expect(not _trip.spend("fuel", 0.12), "the flamethrower needs fuel")
+	_expect(_trip.add_weapon("shotgun") and not _trip.add_weapon("shotgun"), "a weapon is only added once")
+	_expect(_trip.current_weapon() == "pistol", "picking up a weapon doesn't change the one in hand")
+	_trip.cycle_weapon(1)
+	_expect(_trip.current_weapon() == "shotgun", "switching goes to the next weapon")
+	_trip.new_trip(Routes.first_playable(), 61, Survivor.BASE_ROLES, "sawed_off")
+	_expect(_trip.weapons.has("shotgun"), "the Sawed-Off perk starts with a shotgun")
+	for weapon_id: String in Weapons.ORDER:
+		_expect(Weapons.DATA.has(weapon_id), "%s has weapon data" % weapon_id)
+
+
+## Every enemy kind runs in a real level without errors, and the special
+## ones do their thing (shooters spit, jumpers leap).
+func _check_enemy_kinds() -> void:
+	_new_trip(62)
+	_trip.stop_index = 1
+	await _change_to("scavenge")
+	var level := current_scene
+	var player: Node2D = level.get("player")
+	for enemy: Node in level.get("enemies"):
+		enemy.queue_free()
+	(level.get("enemies") as Array).clear()
+	var layout: Object = level.get("_layout")
+	var ground_y: float = layout.get("player_start").y
+	var spawned: Dictionary = {}
+	var x := 120.0
+	for kind: String in ["walker", "runner", "tank", "shooter", "jumper"]:
+		spawned[kind] = level.call("spawn_enemy_near", Vector2(x, ground_y - 1), kind)
+		x += 30.0
+	var shooter: Node2D = spawned["shooter"]
+	player.position = shooter.position + Vector2(-100, 0)
+	player.set("_hurt_timer", 1000.0)
+	var shots: Node = level.get("shots")
+	var fired := false
+	for frame: int in 180:
+		await physics_frame
+		if int(shots.call("enemy_shot_count")) > 0:
+			fired = true
+	_expect(fired, "a shooter spits at a player in range")
+	var tank: Node = spawned["tank"]
+	var walker: Node = spawned["walker"]
+	_expect(int(tank.get("max_health")) > int(walker.get("max_health")), "tanks are tougher than walkers")
+	_expect(float(spawned["runner"].get("speed")) > float(walker.get("speed")), "runners are faster than walkers")
+	# A jumper leaps when the player is above it.
+	var jumper: Node2D = spawned["jumper"]
+	if is_instance_valid(jumper):
+		player.position = jumper.position + Vector2(30, -60)
+		var start_y := jumper.position.y
+		var lowest := start_y
+		for frame: int in 40:
+			await physics_frame
+			if is_instance_valid(jumper):
+				lowest = minf(lowest, jumper.position.y)
+		_expect(lowest < start_y - 20.0, "a jumper leaps toward a player above it")
+	var counted := int(_progress.stat("enemies"))
+	walker.call("hit", 99, 1)
+	_expect(int(_progress.stat("enemies")) == counted + 1, "defeating an enemy counts toward awards")
+
+
+## Each boss: appears at the right stop, attacks, and when beaten opens the
+## exit and earns its award.
+func _check_bosses() -> void:
+	var route := Routes.by_id("maine_to_florida")
+	_trip.new_trip(route, 63)
+	_trip.stop_index = 1
+	_expect(not _trip.is_boss_stop(), "early stops have no boss")
+	_trip.stop_index = _trip.last_scavenge_index()
+	_expect(_trip.is_boss_stop(), "the last scavenging stop of a medium route has a boss")
+	_trip.new_trip(Routes.by_id("new_york_to_washington"), 64)
+	_trip.stop_index = _trip.last_scavenge_index()
+	_expect(not _trip.is_boss_stop(), "short routes have no boss")
+	for threat: int in 4:
+		_trip.new_trip(route, 70 + threat)
+		_trip.apocalypse.threats.clear()
+		_trip.apocalypse.threats.append(threat as Apocalypse.Threat)
+		_trip.stop_index = _trip.last_scavenge_index()
+		_trip.ammo = 200
+		await _change_to("scavenge")
+		var level := current_scene
+		var boss: Node = level.get("boss")
+		_expect(boss != null, "a boss waits at the last stop (threat %d)" % threat)
+		if boss == null:
+			continue
+		_expect(not bool(level.call("exit_open")), "the exit stays shut while the boss lives")
+		var player: Node2D = level.get("player")
+		player.position = (boss as Node2D).position + Vector2(-90, 0)
+		player.set("_hurt_timer", 1000.0)
+		var shots: Node = level.get("shots")
+		var attacked := false
+		var enemies_before: int = (level.get("enemies") as Array).size()
+		for frame: int in 300:
+			await physics_frame
+			if int(shots.call("enemy_shot_count")) > 0 or (level.get("enemies") as Array).size() > enemies_before:
+				attacked = true
+				break
+		_expect(attacked, "%s attacks" % boss.call("display_name"))
+		# Every boss must be reachable: a jumping shot (about 9-59 px up) can hit it.
+		var boss_box: Rect2 = boss.call("box")
+		var floor_y: float = player.position.y
+		_expect(boss_box.end.y > floor_y - 59.0, "%s can be hit by a jumping shot" % boss.call("display_name"))
+		var award_id: String = boss.call("award_id")
+		boss.call("hit", 999, 1)
+		await process_frame
+		_expect(bool(level.call("exit_open")), "beating the boss opens the exit")
+		_expect(_progress.has_award(award_id), "beating the boss earns %s" % award_id)
 
 
 func _finish() -> void:

@@ -45,6 +45,10 @@ var perk_id := "none"
 var car_color := Color("8a3a2a")
 ## Set once the end of this trip has been counted for awards.
 var end_recorded := false
+## Weapons the party carries this trip (shared), and which one is in hand.
+var weapons: Array[String] = []
+var weapon_index := 0
+var _supply_debt: Dictionary = {}
 var _day_carry := 0.0
 
 
@@ -79,6 +83,12 @@ func new_trip(chosen_route: Dictionary, seed_value: int, roles: Array[Survivor.R
 	_day_carry = 0.0
 	perk_id = chosen_perk
 	car_color = Unlocks.car_color(color_id)
+	weapons = []
+	for weapon_id: String in Weapons.ORDER:
+		if Weapons.START.has(weapon_id):
+			weapons.append(weapon_id)
+	weapon_index = weapons.find("pistol")
+	_supply_debt.clear()
 	_apply_perk()
 	log_message(apocalypse.intro())
 
@@ -96,6 +106,10 @@ func _apply_perk() -> void:
 		"beater":
 			has_vehicle = true
 			vehicle_health = 45
+		"sawed_off":
+			add_weapon("shotgun")
+		"hunting_rifle":
+			add_weapon("rifle")
 
 
 func go(screen: String) -> void:
@@ -304,3 +318,69 @@ func record_end() -> void:
 	Progress.record_trip_end(won, str(route.get("id", "")), int(days) + 1, standing_count(), party.size(),
 		not has_vehicle, apocalypse.is_mixed())
 	CloudSync.request_sync()
+
+
+func current_weapon() -> String:
+	return weapons[clampi(weapon_index, 0, weapons.size() - 1)]
+
+
+## Adds a weapon to the party's kit. Returns false if you already had it.
+func add_weapon(weapon_id: String) -> bool:
+	if weapons.has(weapon_id) or not Weapons.DATA.has(weapon_id):
+		return false
+	var held := current_weapon() if not weapons.is_empty() else weapon_id
+	weapons.append(weapon_id)
+	weapons.sort_custom(func(a: String, b: String) -> bool: return Weapons.ORDER.find(a) < Weapons.ORDER.find(b))
+	# Picking up a weapon never changes the one in your hands.
+	weapon_index = weapons.find(held)
+	return true
+
+
+func cycle_weapon(step: int) -> void:
+	var held := current_weapon()
+	weapon_index = (weapons.find(held) + step + weapons.size()) % weapons.size()
+
+
+func select_weapon(weapon_id: String) -> bool:
+	if not weapons.has(weapon_id):
+		return false
+	weapon_index = weapons.find(weapon_id)
+	return true
+
+
+## Pays `cost` of a supply (costs can be fractions, like 1 scrap per 4 nails).
+## Returns false, paying nothing, if there isn't enough.
+func spend(supply: String, cost: float) -> bool:
+	if supply.is_empty() or cost <= 0.0:
+		return true
+	if supply == "fuel":
+		if fuel < cost:
+			return false
+		fuel -= cost
+		return true
+	var debt := float(_supply_debt.get(supply, 0.0)) + cost
+	var whole := floori(debt)
+	if whole > 0:
+		if get_supply(supply) < whole:
+			return false
+		add_supply(supply, -whole)
+		debt -= whole
+	elif get_supply(supply) < 1:
+		return false
+	_supply_debt[supply] = debt
+	return true
+
+
+## Medium and long routes end with a boss at their last scavenging stop.
+func is_boss_stop() -> bool:
+	if Routes.length_name(route) == "short":
+		return false
+	return stop_index == last_scavenge_index()
+
+
+func last_scavenge_index() -> int:
+	var list := stops()
+	for index: int in range(list.size() - 1, -1, -1):
+		if int(list[index]["kind"]) == Routes.Kind.SCAVENGE:
+			return index
+	return -1

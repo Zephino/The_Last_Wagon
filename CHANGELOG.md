@@ -7,6 +7,13 @@ Time: 3:02 AM
 ### Changes
 - Fixed: a road choice event could pop up in the middle of a jump over a flipped car. Continuing then dropped the car straight onto the wreck and hurt everyone. Events now wait until the car is on the ground with no wreck or enemy close by (in front or just behind), and the car keeps its speed after an event. The smoke test now checks this.
 
+- Better levels, round A:
+  - New enemy kinds next to the walker: Sprinter (fast, in pairs), Brute (slow, very tough), Spitter (keeps its distance and spits) and Leaper (jumps onto platforms and roofs). Tougher kinds appear as a trip goes on.
+  - Weapons, found in crates (10%), hidden stashes and from bosses, shared by the party for the trip: Crowbar, Pistol, Shotgun, Rifle (goes through enemies), Flamethrower (burns fuel) and Nail Gun (uses scrap). Q/E or 1-6 switch weapons; Tab now switches survivors. An empty weapon falls back to the crowbar.
+  - Bosses at the last scavenging stop of medium and long routes, one per apocalypse: The Big Rotten, the Glowmother, The Overseer and Patient Zero, each with its own attacks and a health bar. The exit opens once it's beaten, with a big haul and a weapon.
+  - 4 boss awards, unlocking the Sawed-Off and Hunting Rifle perks (start with a shotgun or rifle) and the Chrome and Hazmat Yellow car colors.
+  - Smoke test checks weapons and their supplies, every enemy kind (shooters spit, jumpers leap), and every boss (appears at the right stop, attacks, can be hit, opens the exit, earns its award). It found and fixed two bugs: picking up a weapon changed the one in hand, and The Overseer hovered out of reach.
+
 ### Reason
 The owner reported the bug, and approved the fix together with the "Better levels" rounds A and B.
 
