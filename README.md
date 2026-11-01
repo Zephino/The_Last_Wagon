@@ -234,6 +234,13 @@ All art is placeholder pixel art drawn from code, so there are no image files ye
   lobby from FindGame/Mythriven.
 - The other routes.
 
+## Security
+
+Everything players type, and everything the game receives from the internet,
+is cleaned and checked on both the game side and the Worker side. There's no
+SQL database anywhere, and if one is ever added it must use parameterized
+queries. Details, and the tests that prove it, are in [`SECURITY.md`](SECURITY.md).
+
 ## Copyright and credits
 
 Copyright (c) 2026 Zephino. All Rights Reserved. See [`LICENSE`](LICENSE): you

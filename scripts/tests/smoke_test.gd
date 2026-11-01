@@ -45,6 +45,7 @@ func _run() -> void:
 	await _check_enemy_kinds()
 	await _check_bosses()
 	await _check_level_pieces()
+	await _check_input_safety()
 	_progress.use_test_file("")
 	DirAccess.remove_absolute(TEST_PROGRESS)
 	_finish()
@@ -767,6 +768,69 @@ func _check_level_pieces() -> void:
 	var slowed: float = player.velocity.x
 	Input.action_release("move_right")
 	_expect(slowed > 0.0 and slowed < _trip.active().move_speed() * 0.8, "water slows you down (%.0f)" % slowed)
+
+
+## Hostile input everywhere a player (or the internet) can send text in.
+func _check_input_safety() -> void:
+	var sql := "'; DROP TABLE saves; --"
+	var script := "<script>alert(1)</script>"
+	var hidden := "Bob\u202Egnp.exe\u0000\u200B"
+	# The shared cleaner.
+	_expect(InputSafety.clean_text(hidden, 40) == "Bobgnp.exe", "hidden and control characters are removed (%s)" % InputSafety.clean_text(hidden, 40))
+	_expect(InputSafety.clean_text("a\nb", 10) == "ab" and InputSafety.clean_text("a\nb", 10, true) == "a\nb", "newlines only where allowed")
+	_expect(InputSafety.clean_text("x".repeat(500), 100).length() == 100, "text is cut to its limit")
+	var cleaned_sql := InputSafety.clean_name(sql, 30)
+	_expect(not cleaned_sql.contains("'") and not cleaned_sql.contains(";"), "names lose code punctuation (%s)" % cleaned_sql)
+	_expect(not InputSafety.clean_name(script, 30).contains("<"), "names lose markup")
+	_expect(InputSafety.clean_name("José O.", 14) == "José O.", "normal names in any language stay as they are")
+	_expect(not InputSafety.is_id(sql) and not InputSafety.is_id("__PROTO__") and InputSafety.is_id("first_steps"), "only plain ids pass")
+	_expect(InputSafety.clamp_count(1e30, 0, 100) == 100 and InputSafety.clamp_count(-5, 0, 100) == 0 and InputSafety.clamp_count("7", 0, 100) == 0, "numbers are kept in range")
+	_expect(InputSafety.clamp_count(NAN, 0, 100) == 0, "not-a-number is refused")
+	_expect(InputSafety.clamp_count(INF, 0, 100) == 100 and InputSafety.clamp_count(-INF, 0, 100) == 0, "infinity is kept in range")
+	_expect(InputSafety.clean_email("a@b.com\"><script>") == "" and InputSafety.clean_email("me@example.com") == "me@example.com", "only plain emails")
+	var base := "https://the-last-wagon.example.dev"
+	_expect(InputSafety.is_own_url(base + "/auth/google?login=ab", base, "/auth/google?login=ab"), "our own sign-in page is allowed")
+	_expect(not InputSafety.is_own_url("https://evil.example/auth/google?login=ab", base, "/auth/google?login=ab"), "other sites are refused")
+	_expect(not InputSafety.is_own_url(base + "/auth/google?login=ab\");alert(1);//", base, "/auth/google?login=ab"), "addresses with quotes are refused")
+	# Leaderboard names.
+	var end_script: GDScript = load("res://scripts/screens/end_screen.gd")
+	_expect(end_script.clean_name(sql) == "DROP TABLE s", "leaderboard names keep only letters, numbers, space, - and _ (%s)" % end_script.clean_name(sql))
+	# Downloaded or saved progress with junk in it.
+	_progress.use_test_file(TEST_PROGRESS)
+	_progress.merge({"save_version": 1,
+		"awards": {sql: "2026-11-01T01:53:00", "bunker": script, "first_steps": "2026-11-01T01:53:00"},
+		"stats": {"crates": 1e30, "enemies": -50, sql: 5, "__proto__": 9, "trips": "12"}})
+	_expect(_progress.has_award("first_steps") and not _progress.has_award("bunker"), "only known awards with real dates are kept")
+	_expect(_progress.stat("crates") == int(_progress.get("MAX_STAT")) and _progress.stat("enemies") == 0, "totals are kept in range")
+	_expect(not _progress.stats.has(sql) and not _progress.stats.has("__proto__") and _progress.stat("trips") == 0, "unknown or text totals are ignored")
+	# A party name typed in the store.
+	_new_trip(95)
+	await _change_to("town")
+	var edits := current_scene.find_children("*", "LineEdit", true, false)
+	if not edits.is_empty():
+		var edit := edits[0] as LineEdit
+		edit.text = script
+		edit.text_changed.emit(edit.text)
+		_expect(not _trip.party[0].name.contains("<"), "store names lose markup (%s)" % _trip.party[0].name)
+	# A suggestion full of hidden characters.
+	await _change_to("title")
+	var form: Node = load("res://scripts/screens/suggestion_form.gd").new()
+	current_scene.add_child(form)
+	await process_frame
+	form.get("_title_edit").text = "\u202E\u200B\u0000 hi"
+	form.get("_description").text = "A long enough idea \u202E with " + sql + " \u0000 inside it."
+	var payload: Dictionary = form.call("build_payload")
+	_expect(payload.is_empty(), "a title that is only hidden characters is too short")
+	form.get("_title_edit").text = "More trucks \u202E please"
+	payload = form.call("build_payload")
+	_expect(not str(payload.get("title", "")).contains("\u202E") and not str(payload.get("description", "")).contains("\u0000"), "suggestions are sent without hidden characters")
+	form.queue_free()
+	# The sign-in service sending an address that isn't ours.
+	var google: Node = root.get_node("CloudSync").get("google")
+	google.set("state", "starting")
+	var body := JSON.stringify({"login": "0123456789abcdef0123456789abcdef", "url": "https://evil.example/phish"}).to_utf8_buffer()
+	google.call("_on_reply", HTTPRequest.RESULT_SUCCESS, 200, PackedStringArray(), body)
+	_expect(str(google.get("state")) == "idle" and str(google.get("page_url")) == "", "a sign-in page on another site is never opened")
 
 
 func _place(player: CharacterBody2D, at: Vector2) -> void:

@@ -49,10 +49,11 @@ test("codes are checked and tidied", () => {
 });
 
 test("a save must be a game save object", () => {
-  assert.ok(validateSave(JSON.stringify({ save_version: 3, gold: 5 })).save);
+  assert.ok(validateSave(JSON.stringify({ save_version: 1, awards: {}, stats: { crates: 5 } })).save);
   assert.equal(validateSave("[]").error, "invalid save");
   assert.equal(validateSave("{").error, "invalid json");
-  assert.equal(validateSave(JSON.stringify({ gold: 5 })).error, "invalid save");
+  assert.equal(validateSave(JSON.stringify({ stats: { crates: 5 } })).error, "invalid save");
+  assert.equal(validateSave(JSON.stringify({ save_version: 3, gold: 5 })).error, "invalid save", "unknown fields are refused");
   assert.equal(validateSave("x".repeat(70_000)).error, "save too large");
 });
 
@@ -60,10 +61,10 @@ test("a save is stored and read back with the same code only", async () => {
   const env = { SAVE_VAULT: fakeVaults() };
   let res = await worker.fetch(request("GET", CODE), env);
   assert.deepEqual(await res.json(), { save: null, updated: 0 });
-  res = await worker.fetch(request("PUT", CODE, JSON.stringify({ save_version: 3, gold: 77 })), env);
+  res = await worker.fetch(request("PUT", CODE, JSON.stringify({ save_version: 1, awards: {}, stats: { crates: 77 } })), env);
   assert.equal(res.status, 200);
   res = await worker.fetch(request("GET", "abcdefghjk23"), env);
-  assert.equal((await res.json()).save.gold, 77);
+  assert.equal((await res.json()).save.stats.crates, 77);
   res = await worker.fetch(request("GET", "ZZZZ-ZZZZ-ZZZZ"), env);
   assert.equal((await res.json()).save, null, "another code sees nothing");
 });
@@ -80,7 +81,7 @@ test("bad codes, bad saves, and rapid writes are refused", async () => {
   const env = { SAVE_VAULT: fakeVaults() };
   assert.equal((await worker.fetch(request("GET", "nope"), env)).status, 401);
   assert.equal((await worker.fetch(request("PUT", CODE, "{}"), env)).status, 400);
-  const save = JSON.stringify({ save_version: 3 });
+  const save = JSON.stringify({ save_version: 1 });
   assert.equal((await worker.fetch(request("PUT", CODE, save), env)).status, 200);
   assert.equal((await worker.fetch(request("PUT", CODE, save), env)).status, 429, `within ${MIN_WRITE_GAP_MS} ms`);
 });

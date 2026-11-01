@@ -7,6 +7,9 @@ signal award_earned(award: Dictionary)
 
 const DEFAULT_PATH := "user://progress.json"
 const TOAST_TIME := 4.0
+## The running totals the game keeps; anything else in a file or download is ignored.
+const KNOWN_STATS: Array[String] = ["trips", "finished", "crates", "enemies", "stashes", "bosses"]
+const MAX_STAT := 1000000000
 
 var awards: Dictionary = {}
 var stats: Dictionary = {}
@@ -47,11 +50,9 @@ func load_progress() -> void:
 	var json := JSON.new()
 	if file == null or json.parse(file.get_as_text()) != OK or not json.data is Dictionary:
 		return
-	var data: Dictionary = json.data
-	if data.get("awards") is Dictionary:
-		awards = data["awards"]
-	if data.get("stats") is Dictionary:
-		stats = data["stats"]
+	# The file is checked like anything from outside: only known awards with
+	# real dates, and known totals within limits.
+	merge(json.data)
 
 
 func save_progress() -> void:
@@ -73,17 +74,23 @@ func merge(save: Dictionary) -> bool:
 	var changed := false
 	var other_awards: Variant = save.get("awards", {})
 	if other_awards is Dictionary:
-		for award_id: String in other_awards:
-			if Unlocks.award(award_id).is_empty():
+		for key: Variant in other_awards:
+			var award_id := str(key)
+			if not InputSafety.is_id(award_id) or Unlocks.award(award_id).is_empty():
 				continue
-			var when := str(other_awards[award_id])
+			var when := InputSafety.clean_date(other_awards[key])
+			if when.is_empty():
+				continue
 			if not awards.has(award_id) or when < str(awards[award_id]):
 				awards[award_id] = when
 				changed = true
 	var other_stats: Variant = save.get("stats", {})
 	if other_stats is Dictionary:
-		for stat_id: String in other_stats:
-			var value := int(other_stats[stat_id])
+		for key: Variant in other_stats:
+			var stat_id := str(key)
+			if not KNOWN_STATS.has(stat_id):
+				continue
+			var value := InputSafety.clamp_count(other_stats[key], 0, MAX_STAT)
 			if value > stat(stat_id):
 				stats[stat_id] = value
 				changed = true
@@ -114,7 +121,7 @@ func stat(stat_id: String) -> int:
 
 ## Adds to a running total and earns any award that total reaches.
 func add_stat(stat_id: String, amount := 1) -> void:
-	stats[stat_id] = stat(stat_id) + amount
+	stats[stat_id] = mini(stat(stat_id) + amount, MAX_STAT)
 	save_progress()
 	match stat_id:
 		"crates":

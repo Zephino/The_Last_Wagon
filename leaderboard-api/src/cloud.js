@@ -13,6 +13,10 @@
  * so nobody can list saves or read one without the code. No names, emails,
  * or other personal data are kept.
  *
+ * Security: no SQL anywhere (Durable Object storage get/put only). If a SQL
+ * store is ever added, use bound parameters; string filtering is NOT SQL
+ * injection prevention. Uploads are rebuilt from a strict shape (validateSave).
+ *
  * The game merges its progress with the cloud copy before sending (awards
  * are combined, each total keeps the higher number), so the Worker just
  * keeps what it is given.
@@ -56,19 +60,60 @@ export async function hashCode(code) {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** A save the Worker will keep: a JSON object from the game, not too big. */
+/** Most awards and totals a save may hold (the game has far fewer). */
+export const MAX_AWARDS = 100;
+export const MAX_STATS = 32;
+export const MAX_STAT_VALUE = 1_000_000_000;
+const ID_PATTERN = /^[a-z0-9_]{1,40}$/;
+const STAT_PATTERN = /^[a-z_]{1,24}$/;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z?$/;
+/** Names that could tamper with JavaScript objects; never accepted as keys. */
+const FORBIDDEN_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+function plainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+/**
+ * A save the Worker will keep. Only the exact shape the game sends is
+ * accepted: { save_version, awards: {id: date}, stats: {id: whole number} }.
+ * Anything else (unknown fields, odd ids, text where numbers belong, huge or
+ * negative numbers, too many entries) is refused. Returns { save, text }
+ * with a freshly built copy, so nothing unexpected is ever stored.
+ */
 export function validateSave(text) {
   if (typeof text !== "string" || text.length === 0) return { error: "empty save" };
   if (text.length > MAX_SAVE_BYTES) return { error: "save too large" };
-  let save;
+  let raw;
   try {
-    save = JSON.parse(text);
+    raw = JSON.parse(text);
   } catch {
     return { error: "invalid json" };
   }
-  if (!save || typeof save !== "object" || Array.isArray(save)) return { error: "invalid save" };
-  if (!Number.isFinite(save.save_version)) return { error: "invalid save" };
-  return { save };
+  if (!plainObject(raw)) return { error: "invalid save" };
+  for (const key of Object.keys(raw)) {
+    if (!["save_version", "awards", "stats"].includes(key)) return { error: "invalid save" };
+  }
+  const version = raw.save_version;
+  if (!Number.isInteger(version) || version < 1 || version > 100) return { error: "invalid save" };
+  const awards = raw.awards ?? {};
+  const stats = raw.stats ?? {};
+  if (!plainObject(awards) || !plainObject(stats)) return { error: "invalid save" };
+  const awardEntries = Object.entries(awards);
+  const statEntries = Object.entries(stats);
+  if (awardEntries.length > MAX_AWARDS || statEntries.length > MAX_STATS) return { error: "invalid save" };
+  const save = { save_version: version, awards: {}, stats: {} };
+  for (const [id, when] of awardEntries) {
+    if (FORBIDDEN_KEYS.has(id) || !ID_PATTERN.test(id)) return { error: "invalid award" };
+    if (typeof when !== "string" || !DATE_PATTERN.test(when)) return { error: "invalid award" };
+    save.awards[id] = when;
+  }
+  for (const [id, value] of statEntries) {
+    if (FORBIDDEN_KEYS.has(id) || !STAT_PATTERN.test(id)) return { error: "invalid stat" };
+    if (!Number.isInteger(value) || value < 0 || value > MAX_STAT_VALUE) return { error: "invalid stat" };
+    save.stats[id] = value;
+  }
+  return { save, text: JSON.stringify(save) };
 }
 
 /** Routes /cloud/save to the player's own SaveVault. */
@@ -83,9 +128,10 @@ export async function handleCloud(request, env) {
   if (request.method === "PUT") {
     const declared = parseInt(request.headers.get("content-length") || "0", 10);
     if (Number.isFinite(declared) && declared > MAX_SAVE_BYTES) return json({ error: "save too large" }, 413);
-    body = await request.text();
-    const checked = validateSave(body);
+    const checked = validateSave(await request.text());
     if (checked.error) return json({ error: checked.error }, checked.error === "save too large" ? 413 : 400);
+    // Store the rebuilt copy, never the raw text that was sent.
+    body = checked.text;
   }
   const stub = env.SAVE_VAULT.get(env.SAVE_VAULT.idFromName(await hashCode(code)));
   return stub.fetch("https://vault/save", { method: request.method, body: request.method === "PUT" ? body : undefined });

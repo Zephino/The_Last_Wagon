@@ -76,6 +76,15 @@ export function newSyncCode() {
   return [...crypto.getRandomValues(new Uint8Array(CODE_LENGTH))].map((b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join("");
 }
 
+/**
+ * Google's email, only if it looks like a plain address (no spaces, quotes,
+ * markup or control characters), up to 120 characters; otherwise "".
+ */
+export function cleanEmail(raw) {
+  if (typeof raw !== "string" || raw.length > 120) return "";
+  return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(raw) ? raw : "";
+}
+
 export function isLoginId(text) {
   return typeof text === "string" && /^[0-9a-f]{32}$/.test(text);
 }
@@ -192,7 +201,7 @@ async function callback(env, url) {
     account = { code: ticket.device_code || newSyncCode(), created: Date.now() };
     await store(env, accountName, account);
   }
-  const email = typeof claims.email === "string" ? claims.email.slice(0, 120) : "";
+  const email = cleanEmail(claims.email);
   await store(env, "login:" + login, { state: "done", created: ticket.created, code: account.code, email }, ticket.created + LOGIN_TTL_MS);
   return page("Signed in!", "Going back to The Last Wagon…");
 }

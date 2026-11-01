@@ -127,6 +127,15 @@ New branch ruleset**
 Make a new one (step 1), then in this folder run
 `npx wrangler secret put GITHUB_TOKEN` and paste it there. No game change needed.
 
+## Security
+
+Every request is checked against a strict shape before it's used: trips
+(`board.js`), suggestions (`suggestions.js`), online progress (`cloud.js`,
+rebuilt from known fields only) and sign-in (`accounts.js`). There is no SQL:
+storage is Workers KV, Durable Objects and the GitHub API. **If a SQL database
+is ever added, use bound parameters only.** Hostile-input tests are in
+`test/security.test.js`. See also [`../SECURITY.md`](../SECURITY.md).
+
 ## Honest limits
 
 Scores come from players' browsers, so a determined cheater could fake one.

@@ -100,7 +100,7 @@ func _build_party_panel(root: Control) -> void:
 			name_edit.text = survivor.name
 			name_edit.max_length = 14
 			name_edit.add_theme_font_size_override("font_size", 11)
-			name_edit.text_changed.connect(func(new_text: String) -> void: survivor.name = new_text.strip_edges())
+			name_edit.text_changed.connect(func(new_text: String) -> void: survivor.name = InputSafety.clean_name(new_text, 14))
 			column.add_child(name_edit)
 		else:
 			column.add_child(UiKit.label(survivor.name, 11))

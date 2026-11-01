@@ -12,6 +12,12 @@
  * Workers KV (fast) and commits leaderboard.json to the repo's `data` branch so
  * anyone can see it on GitHub. The game never holds a GitHub key.
  *
+ * Security: every request is checked against a strict shape before use
+ * (board.js, suggestions.js, cloud.js, accounts.js). There is no SQL anywhere:
+ * storage is Workers KV, Durable Objects (get/put) and the GitHub API. If a
+ * SQL database is ever added, use bound parameters only; string filtering is
+ * NOT SQL injection prevention. See README "Security".
+ *
  * Secret:   GITHUB_TOKEN (fine-grained token: Contents + Issues read/write on Zephino/The_Last_Wagon only)
  * Binding:  LEADERBOARD_KV
  * Vars:     GITHUB_OWNER, GITHUB_REPO, GITHUB_PATH, GITHUB_BRANCH (see wrangler.toml)

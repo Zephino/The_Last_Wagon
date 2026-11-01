@@ -45,7 +45,11 @@ export function looksLikeInjection(raw) {
     if (s.includes(marker)) return true;
   }
   for (let i = 0; i < s.length; i++) {
-    if (s.charCodeAt(i) < 32) return true;
+    const code = s.charCodeAt(i);
+    // Control characters, and invisible or right-to-left trick characters.
+    if (code < 32 || (code >= 127 && code <= 159)) return true;
+    if ((code >= 0x200b && code <= 0x200f) || (code >= 0x202a && code <= 0x202e)) return true;
+    if ((code >= 0x2066 && code <= 0x2069) || code === 0xfeff) return true;
   }
   return false;
 }

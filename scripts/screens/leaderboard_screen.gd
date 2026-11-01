@@ -88,7 +88,7 @@ func _row(rank: int, entry: Dictionary) -> HBoxContainer:
 	var finished := bool(entry.get("finished", false))
 	var color := UiKit.GOOD if finished else UiKit.TEXT
 	row.add_child(_cell("%d." % rank, 30, UiKit.DIM))
-	row.add_child(_cell(str(entry.get("name", "?")), 90, UiKit.ACCENT if rank <= 3 else UiKit.TEXT))
+	row.add_child(_cell(InputSafety.clean_name(str(entry.get("name", "?")), 12), 90, UiKit.ACCENT if rank <= 3 else UiKit.TEXT))
 	var result := "Made it!" if finished else "Reached stop %d of %d" % [int(entry.get("stops", 0)), int(entry.get("total_stops", 0))]
 	row.add_child(_cell(result, 120, color))
 	row.add_child(_cell("%d days" % int(entry.get("days", 0)), 70, UiKit.TEXT))

@@ -77,8 +77,9 @@ func _build_fields(column: VBoxContainer) -> void:
 
 ## The suggestion to send, or an empty dictionary (with the reason shown) if it isn't ready.
 func build_payload() -> Dictionary:
-	var title := _title_edit.text.strip_edges()
-	var description := _description.text.strip_edges()
+	# Cleaned here as well as on the Worker: hidden characters removed, sizes kept in bounds.
+	var title := InputSafety.clean_text(_title_edit.text, MAX_TITLE)
+	var description := InputSafety.clean_text(_description.text, MAX_DESCRIPTION + 1, true)
 	if title.length() < MIN_TITLE:
 		_status.text = "The title needs at least %d letters." % MIN_TITLE
 		return {}

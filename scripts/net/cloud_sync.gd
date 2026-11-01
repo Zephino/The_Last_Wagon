@@ -73,7 +73,7 @@ func code() -> String:
 
 
 func email() -> String:
-	return str(PlayerPrefs.get_value("google_email", ""))
+	return InputSafety.clean_email(PlayerPrefs.get_value("google_email", ""))
 
 
 func is_linked() -> bool:

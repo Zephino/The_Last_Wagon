@@ -77,6 +77,11 @@ func _on_reply(result: int, http_code: int, _headers: PackedStringArray, body: P
 		else:
 			_login = str(reply["login"])
 			page_url = str(reply.get("url", ""))
+			# Only ever open our own Worker's sign-in page, with a plain login id.
+			if not _login.is_valid_hex_number() or _login.length() != 32 \
+					or not InputSafety.is_own_url(page_url, OnlineConfig.api_base(), "/auth/google?login=" + _login):
+				_stop("Something went wrong. Try again.")
+				return
 			state = "waiting"
 			_left = TIMEOUT_S
 			_poll_in = POLL_S
@@ -115,7 +120,7 @@ func _finish(account_code: String, account_email: String) -> void:
 	if CloudSync.normalize(account_code).is_empty():
 		_stop("Something went wrong. Try again.")
 		return
-	CloudSync.link(CloudSync.normalize(account_code), account_email)
+	CloudSync.link(CloudSync.normalize(account_code), InputSafety.clean_email(account_email))
 	state = "done"
 	message = ""
 	page_url = ""

@@ -1,5 +1,23 @@
 # Changelog
 
+## Version 00.01.14
+Date: 11/01/2026
+Time: 7:02 AM
+
+### Changes
+- Input safety audit and fixes:
+  - New shared cleaner `scripts/core/input_safety.gd`: removes control characters and invisible / right-to-left trick characters, keeps lengths in bounds, and checks ids, dates, numbers, email addresses and web addresses.
+  - Party names typed in the store are cleaned (no markup or code punctuation, up to 14).
+  - Suggestions are cleaned in the game before sending (the Worker already cleaned and escaped them).
+  - Online progress: the Worker now accepts only the exact progress shape (known fields, id patterns, real dates, whole non-negative capped numbers, no `__proto__`-style keys) and stores a rebuilt copy, never the raw upload. The game also checks downloaded and saved progress: only known awards with real dates, and known totals within range.
+  - Google sign-in: the game only opens our own Worker's sign-in page, and only plain email addresses are passed on and shown.
+  - Leaderboard: names with invisible or right-to-left trick characters are now refused outright, and names are cleaned again before they're shown.
+- SQL injection: there is no SQL database anywhere, so it isn't possible today. Added the rule "parameterized queries only, if SQL is ever added" to the code, both READMEs and a new `SECURITY.md`, which lists every input and what checks it.
+- Tests: new Worker security tests (SQL text, script tags, control characters, huge/negative numbers, unknown fields, object-tampering keys, bad emails), and a smoke-test section that sends hostile input to every game-side input. They found and fixed two bugs: the "broken character" symbol slipped through the cleaner, and huge numbers wrapped around instead of being capped.
+
+### Reason
+The owner asked to make sure all user input is sanitized and protected from SQL injection.
+
 ## Version 00.01.13
 Date: 11/01/2026
 Time: 3:02 AM
