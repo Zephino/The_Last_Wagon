@@ -37,21 +37,43 @@ newer version online and switches to it (`web/update.js`).
 
 ## How a trip works
 
-1. **Title:** choose a route. Only *Maine to Florida* is playable so far.
-2. **Store (Portland, ME):** spend your $600 on food, fuel, ammo, medkits and scrap.
-   You can rename your four survivors here. You start **without a car**.
-3. **Map:** see where you are, heal or revive survivors with medkits, repair
+1. **Title:** choose a route. *Maine to Florida* is open; the other four
+   routes unlock with awards.
+2. **Prepare:** pick 4 survivors, a starting perk and a car color.
+3. **Store (the starting town):** spend your $600 on food, fuel, ammo, medkits
+   and scrap. You can rename your survivors here. You start **without a car**
+   (unless you chose the Old Beater perk).
+4. **Map:** see where you are, heal or revive survivors with medkits, repair
    the car with scrap, pick who leads, then scavenge, shop or travel.
-4. **Road:** drive or walk to the next stop.
+5. **Road:** drive or walk to the next stop. Two or three times per stretch a
+   **road event** stops you and asks what to do (help a stranger, trade with a
+   convoy, take a detour...). Some choices need a certain survivor.
    - In a car it drives itself until danger is close, then you take the wheel.
    - On foot you are slow, and you have to shoot enemies in your way. The first
      leg always has an abandoned car you can hotwire.
    - Running out of fuel, or wrecking the car, puts you back on foot.
-5. **Scavenge:** a side-scrolling level. Open crates for supplies and reach the
+6. **Scavenge:** a side-scrolling level. Open crates for supplies and reach the
    green EXIT sign. If a survivor goes down, the next one takes over.
-6. You win by reaching Miami. You lose when everyone is down and no medkits are left.
+   About half the levels hide a **secret stash**: faint ledges climbing high
+   above the street to a golden crate.
+7. You win by reaching the last stop. You lose when everyone is down and no medkits are left.
 
 Each day on the road, every survivor eats 2 lbs of food. No food means everyone gets hurt.
+
+## Roguelike: awards and unlocks
+
+Every trip is a fresh run (no saving in the middle of a trip). What you keep
+between trips are **awards**, shown on the title screen's **Awards** page.
+Each award unlocks something for future trips:
+
+- **Routes:** finishing a route opens the next one.
+- **Survivors:** the Cook (party eats 40% less) and the Thief (extra money).
+- **Starting perks:** extra money, fuel, medkits, ammo, or a beat-up car.
+- **Car colors.**
+
+Some awards are secrets (hidden stashes and rare road events) and show as
+??? until found. Progress is saved on this device for now; online sync comes
+next. The leaderboard shows which perk each trip used.
 
 ## Leaderboard and suggestions
 
@@ -82,6 +104,8 @@ is in `scripts/net/online_config.gd`.
 | Role | Perk |
 |---|---|
 | Scout | Runs faster, jumps higher, finds extra loot |
+| Cook (unlockable) | The party eats 40% less food |
+| Thief (unlockable) | Finds extra money in crates and events |
 | Gunner | Double damage, shoots faster |
 | Medic | Medkits heal and revive much more |
 | Mechanic | Uses less fuel, better repairs, hotwires cars fast |
@@ -105,7 +129,8 @@ The Worker has its own tests: `cd leaderboard-api && npm test`.
 |---|---|
 | `scenes/` | One small scene per screen (title, town, map, road, scavenge, end) |
 | `scripts/core/` | Autoloads (`Trip` run state, `Controls` input), pixel art, UI helpers, backdrop |
-| `scripts/trip/` | Survivors, apocalypses, routes, flavor text |
+| `scripts/trip/` | Survivors, apocalypses, routes, road events, flavor text |
+| `scripts/meta/` | Awards and unlocks (`unlocks.gd`), and the `Progress` autoload that saves them |
 | `scripts/screens/` | The code for each screen, plus the map painter |
 | `scripts/road/` | Enemies on the road |
 | `scripts/scavenge/` | Level generator, player and enemies for scavenging levels |

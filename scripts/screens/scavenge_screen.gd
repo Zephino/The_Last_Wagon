@@ -93,6 +93,10 @@ func _build_world() -> void:
 
 func _solid_visual(kind: String, ground: Color, rect: Rect2) -> Node2D:
 	match kind:
+		"secret":
+			var ledge := PixelArt.tiled(PixelArt.plank_tile(Color("7a5a3a")), rect.position, rect.size)
+			ledge.modulate = Color(1, 1, 1, 0.3)
+			return ledge
 		"platform":
 			return PixelArt.tiled(PixelArt.plank_tile(Color("7a5a3a")), rect.position, rect.size)
 		"building":
@@ -104,7 +108,11 @@ func _spawn_crates() -> void:
 	for spot: Vector2 in _layout.crate_spots:
 		var sprite := PixelArt.standing(PixelArt.crate(), spot)
 		add_child(sprite)
-		_crates.append({"rect": Rect2(spot - Vector2(5, 10), Vector2(10, 10)), "node": sprite})
+		_crates.append({"rect": Rect2(spot - Vector2(5, 10), Vector2(10, 10)), "node": sprite, "stash": false})
+	for spot: Vector2 in _layout.stash_spots:
+		var golden := PixelArt.standing(PixelArt.golden_crate(), spot)
+		add_child(golden)
+		_crates.append({"rect": Rect2(spot - Vector2(5, 10), Vector2(10, 10)), "node": golden, "stash": true})
 
 
 func _spawn_player() -> void:
@@ -170,6 +178,8 @@ func on_enemy_killed(enemy: ScavEnemy) -> void:
 		return
 	enemies.erase(enemy)
 	enemy.queue_free()
+	if enemy.health <= 0:
+		Progress.add_stat("enemies")
 
 
 func on_survivor_downed(survivor: Survivor) -> void:
@@ -188,7 +198,10 @@ func _check_crates() -> void:
 		if player_box.intersects(crate["rect"]):
 			_crates.erase(crate)
 			(crate["node"] as Sprite2D).queue_free()
-			_open_crate()
+			if crate["stash"]:
+				_open_stash()
+			else:
+				_open_crate()
 
 
 func _open_crate() -> void:
@@ -212,9 +225,29 @@ func _open_crate() -> void:
 		amount = _rng.randi_range(15, 60)
 	if Trip.has_standing_role(Survivor.Role.SCOUT):
 		amount = ceili(amount * SCOUT_LOOT_BONUS)
+	var text := "Crate: " + _gain(supply, amount)
+	if Trip.has_standing_role(Survivor.Role.THIEF):
+		text += ", " + _gain("money", _rng.randi_range(5, 20))
+	Progress.add_stat("crates")
+	_banner(text)
+
+
+## A hidden stash: a big haul of several supplies, and it counts toward awards.
+func _open_stash() -> void:
+	var parts: Array[String] = []
+	parts.append(_gain("food", _rng.randi_range(20, 35)))
+	parts.append(_gain("ammo", _rng.randi_range(20, 35)))
+	parts.append(_gain("medkits", 1))
+	parts.append(_gain("money", _rng.randi_range(40, 90)))
+	Progress.add_stat("stashes")
+	_banner("HIDDEN STASH! " + ", ".join(parts))
+
+
+## Adds a supply to the trip and to this level's haul; returns "+N supply".
+func _gain(supply: String, amount: int) -> String:
 	Trip.add_supply(supply, amount)
 	_loot[supply] = int(_loot.get(supply, 0)) + amount
-	_banner("Crate: +%d %s" % [amount, supply])
+	return "+%d %s" % [amount, supply]
 
 
 func _end(text: String) -> void:

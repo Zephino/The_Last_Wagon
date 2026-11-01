@@ -31,14 +31,11 @@ func _build_menu() -> void:
 	column.add_child(tagline)
 	column.add_child(UiKit.label("Choose your route:", 12))
 	for route: Dictionary in Routes.all():
-		var playable: bool = route["playable"]
-		var text: String = route["name"] if playable else "%s  (coming later)" % route["name"]
-		var route_button := UiKit.button(text, _start_trip.bind(route))
-		route_button.disabled = not playable
-		column.add_child(route_button)
+		column.add_child(_route_button(route))
 	var extras := UiKit.hbox(8)
 	extras.alignment = BoxContainer.ALIGNMENT_CENTER
 	extras.add_child(UiKit.button("Leaderboard", Trip.go.bind("leaderboard"), 12))
+	extras.add_child(UiKit.button("Awards", Trip.go.bind("awards"), 12))
 	extras.add_child(UiKit.button("Suggest an idea", _open_suggestions, 12))
 	extras.add_child(UiKit.button("Settings", Trip.go.bind("settings"), 12))
 	extras.add_child(UiKit.button("Quit", _on_quit, 12))
@@ -53,9 +50,22 @@ func _build_menu() -> void:
 	UiKit.pin(credit, root, Vector2(0, 1), Vector2(8, -16))
 
 
-func _start_trip(route: Dictionary) -> void:
-	Trip.new_trip(route, int(Time.get_unix_time_from_system()))
-	Trip.go("town")
+## A route button: open routes go to the Prepare screen; locked ones say how to unlock them.
+func _route_button(route: Dictionary) -> Button:
+	var unlocked := Progress.is_unlocked("route", str(route["id"]))
+	var text: String = route["name"]
+	var route_button := UiKit.button(text, _choose_route.bind(route))
+	if not unlocked:
+		var award := Unlocks.award_for("route", str(route["id"]))
+		route_button.text = "%s  (locked)" % text
+		route_button.tooltip_text = "To unlock: %s" % award.get("how", "")
+	route_button.disabled = not unlocked
+	return route_button
+
+
+func _choose_route(route: Dictionary) -> void:
+	Trip.route = route
+	Trip.go("prepare")
 
 
 func _open_suggestions() -> void:

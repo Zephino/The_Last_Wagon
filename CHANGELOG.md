@@ -1,5 +1,24 @@
 # Changelog
 
+## Version 00.01.10
+Date: 11/01/2026
+Time: 1:45 AM
+
+### Changes
+- Road choice events: 2-3 times per stretch the trip stops for an event with 2-3 choices (15 events, such as a stranger, a trading convoy, a detour sign, a toll booth or a storm). Outcomes are random; some choices need a certain survivor or supply.
+- Secrets: 3 rare road events (a radio signal, a bunker hatch, an ice cream truck), and hidden stashes in about half the scavenging levels (faint ledges up to a golden crate with a big haul).
+- Awards (17): achievements and secrets, kept between trips (the game is a roguelike: no saving mid-trip). Each award unlocks something: a route, a survivor, a starting perk or a car color. A pop-up shows when you earn one.
+- The other four routes are now playable (Maine to California, Maine to Oregon, Oregon to Florida, Florida to California), each locked until you finish the one before.
+- New survivors: Cook (party eats 40% less) and Thief (extra money), unlocked by awards.
+- New Prepare screen: pick 4 survivors, a starting perk and a car color before each trip. Choices are remembered.
+- New Awards screen (title and end screens) with totals across all trips.
+- The leaderboard records and shows the perk used. The Worker accepts it (older games still work).
+- Progress is saved on this device (`user://progress.json`).
+- Smoke test checks routes, awards, unlocks, perks, the Cook, every road event and outcome, the event pop-up, hidden stashes and the new screens. A physics test confirmed survivors can climb the stash ledges.
+
+### Reason
+The owner chose "deeper trip" with road choice events (often), and asked for a roguelike with awards for secrets that unlock survivors, perks, car colors and routes. Online sync of progress comes in the next round.
+
 ## Version 00.01.09
 Date: 11/01/2026
 Time: 1:25 AM

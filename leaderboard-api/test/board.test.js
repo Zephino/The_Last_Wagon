@@ -16,6 +16,7 @@ const trip = {
   survivors: 3,
   miles: 1720,
   apocalypse: "zombies",
+  perk: "none",
   version: "00.01.07",
 };
 
@@ -44,6 +45,14 @@ test("refuses impossible trips", () => {
   assert.equal(validateScore({ ...trip, days: 0 }).error, "invalid days");
   assert.equal(validateScore({ ...trip, days: 1 }).error, "invalid miles");
   assert.equal(validateScore({ ...trip, miles: 0 }).error, "invalid miles");
+});
+
+test("perk is optional (older games), checked, and part of a trip's identity", () => {
+  const { perk, ...older } = trip;
+  assert.equal(validateScore(older).entry.perk, "none");
+  assert.equal(validateScore({ ...trip, perk: "pocket_money" }).entry.perk, "pocket_money");
+  assert.equal(validateScore({ ...trip, perk: "<b>" }).error, "invalid perk");
+  assert.equal(isDuplicate([trip], { ...trip, perk: "ammo_belt" }), false);
 });
 
 test("names are cleaned to letters, numbers, space, _ and -", () => {

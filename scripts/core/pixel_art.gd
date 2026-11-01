@@ -122,6 +122,10 @@ static func crate() -> Texture2D:
 	return from_rows("crate", CRATE_ROWS, {"d": Color("5a3a1e"), "w": Color("a8743a")})
 
 
+static func golden_crate() -> Texture2D:
+	return from_rows("golden_crate", CRATE_ROWS, {"d": Color("8a6a10"), "w": Color("f0c840")})
+
+
 static func exit_sign() -> Texture2D:
 	return from_rows("exit_sign", SIGN_ROWS, {"g": Color("2f7a3a"), "w": Color("f0f0e0"), "p": Color("6a6a6a")})
 

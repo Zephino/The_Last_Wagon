@@ -13,6 +13,7 @@
  *   survivors   survivors still standing at the end (0-4)
  *   miles       miles traveled
  *   apocalypse  what ended the world, e.g. "zombies" or "fallout+aliens"
+ *   perk        starting perk id, "none" if no perk (older games don't send it)
  *   version     game version, "XX.XX.XX"
  *   date        set by the Worker, never by the game
  *
@@ -33,6 +34,7 @@ export const ABOUT =
   "The Last Wagon shared leaderboard. Written only by the leaderboard Worker; edits by hand are overwritten.";
 
 const ROUTE_PATTERN = /^[a-z0-9_]{1,40}$/;
+const PERK_PATTERN = /^[a-z_]{1,24}$/;
 const VERSION_PATTERN = /^\d{2}\.\d{2}\.\d{2}$/;
 /** Script / markup characters: a name containing any of these is refused outright. */
 const INJECTION_MARKERS = ["'", '"', ";", "--", "/*", "*/", "\\", "`", "<", ">"];
@@ -102,8 +104,10 @@ export function validateScore(body) {
   if (apocalypse === null) return { error: "invalid apocalypse" };
   const version = String(body.version ?? "");
   if (!VERSION_PATTERN.test(version)) return { error: "invalid version" };
+  const perk = body.perk === undefined ? "none" : String(body.perk);
+  if (!PERK_PATTERN.test(perk)) return { error: "invalid perk" };
   return {
-    entry: { name, route, finished, stops, total_stops, days, survivors, miles, apocalypse, version },
+    entry: { name, route, finished, stops, total_stops, days, survivors, miles, apocalypse, perk, version },
   };
 }
 
@@ -128,7 +132,8 @@ export function isDuplicate(entries, entry) {
       e.days === entry.days &&
       e.survivors === entry.survivors &&
       e.miles === entry.miles &&
-      e.apocalypse === entry.apocalypse,
+      e.apocalypse === entry.apocalypse &&
+      (e.perk ?? "none") === (entry.perk ?? "none"),
   );
 }
 

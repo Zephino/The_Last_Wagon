@@ -5,9 +5,11 @@ extends SceneTree
 ## Exit code 0 = pass, 1 = fail. Also check the output for "SCRIPT ERROR".
 
 const MAX_WAIT_FRAMES := 600
+const TEST_PROGRESS := "user://test_progress_scratch.json"
 
 var _errors: Array[String] = []
 var _trip: Node
+var _progress: Node
 
 
 func _init() -> void:
@@ -17,6 +19,8 @@ func _init() -> void:
 func _run() -> void:
 	await process_frame
 	_trip = root.get_node("Trip")
+	_progress = root.get_node("Progress")
+	_progress.use_test_file(TEST_PROGRESS)
 	_check_version()
 	_check_new_trip()
 	_check_level_layouts()
@@ -28,6 +32,14 @@ func _run() -> void:
 	await _check_game_over()
 	_check_score_entry()
 	await _check_online_screens()
+	_check_routes()
+	_check_unlocks_and_awards()
+	_check_road_events()
+	await _check_choice_event_on_road()
+	_check_stashes()
+	await _check_meta_screens()
+	_progress.use_test_file("")
+	DirAccess.remove_absolute(TEST_PROGRESS)
 	_finish()
 
 
@@ -124,6 +136,8 @@ func _check_drive_to_next_stop() -> void:
 	await _change_to("road")
 	var road := current_scene
 	_expect(road.name == "Road", "road screen should be showing")
+	# Skip this stretch's choice events (tested separately) and jump to the end.
+	(road.get("_choice_xs") as Array).clear()
 	road.set("_x", float(road.get("_length")) - 2.0)
 	var arrived := await _wait_for_scene("Map")
 	_expect(arrived, "driving to the end of the road should arrive at the map")
@@ -235,6 +249,153 @@ func _check_online_screens() -> void:
 	_expect(payload.get("website") == "", "the spam trap stays empty")
 	_expect(payload.get("client") is Dictionary, "device info is attached")
 	form.queue_free()
+
+
+func _check_routes() -> void:
+	var ids: Array[String] = []
+	for route: Dictionary in Routes.all():
+		var stops: Array = route["stops"]
+		ids.append(str(route["id"]))
+		_expect(stops.size() >= 8, "%s should have at least 8 stops" % route["id"])
+		_expect(int(stops[0]["kind"]) == Routes.Kind.START, "%s starts with a start town" % route["id"])
+		_expect(int(stops[-1]["kind"]) == Routes.Kind.FINISH, "%s ends with a finish" % route["id"])
+		for stop: Dictionary in stops:
+			var pixel := MapPainter.to_pixel(float(stop["lon"]), float(stop["lat"]))
+			_expect(pixel.x >= 0 and pixel.y >= 0 and pixel.x < MapPainter.WIDTH and pixel.y < MapPainter.HEIGHT,
+				"%s is on the map" % stop["city"])
+	for route_id: String in ids:
+		_expect(ids.count(route_id) == 1, "route ids are unique")
+		_expect(_progress.is_unlocked("route", route_id) or not Unlocks.award_for("route", route_id).is_empty(),
+			"%s is free or has an award that unlocks it" % route_id)
+
+
+func _check_unlocks_and_awards() -> void:
+	_expect(_progress.is_unlocked("route", "maine_to_florida"), "Maine to Florida is open from the start")
+	_expect(not _progress.is_unlocked("route", "maine_to_california"), "other routes start locked")
+	_expect(not _progress.is_unlocked("role", "cook"), "the Cook starts locked")
+	for award: Dictionary in Unlocks.AWARDS:
+		_expect(Unlocks.describe_unlock(award["unlock"]) != "", "%s unlocks something real" % award["id"])
+	# A perfect finish earns the end-of-trip awards and unlocks things.
+	_trip.new_trip(Routes.first_playable(), 21, Survivor.BASE_ROLES, "none", "classic_red")
+	_trip.won = true
+	_trip.stop_index = _trip.total_stops()
+	_trip.days = 10.0
+	_trip.record_end()
+	_trip.record_end()
+	_expect(_progress.stat("finished") == 1, "a trip end is counted once")
+	for award_id: String in ["finish_any", "finish_maine_to_florida", "full_house", "on_foot", "speed_demon"]:
+		if award_id == "finish_maine_to_florida":
+			continue
+		_expect(_progress.has_award(award_id), "a perfect finish earns %s" % award_id)
+	_expect(_progress.is_unlocked("route", "maine_to_california"), "finishing unlocks Maine to California")
+	_expect(_progress.is_unlocked("role", "cook"), "Full House unlocks the Cook")
+	# Progress survives a reload from disk.
+	_progress.load_progress()
+	_expect(_progress.has_award("finish_any"), "awards are saved")
+	for count: int in 5:
+		_progress.add_stat("stashes")
+	_expect(_progress.has_award("stash_1") and _progress.has_award("stash_5"), "stashes earn their awards")
+	# Perks and the Cook change the trip.
+	var cook_party: Array[Survivor.Role] = [Survivor.Role.SCOUT, Survivor.Role.GUNNER, Survivor.Role.MEDIC, Survivor.Role.COOK]
+	_trip.new_trip(Routes.first_playable(), 22, cook_party, "pocket_money", "racing_yellow")
+	_expect(_trip.money == _trip.STARTING_MONEY + 150, "Pocket Money adds $150")
+	_expect(_trip.car_color == Unlocks.car_color("racing_yellow"), "the chosen car color is used")
+	_expect(_trip.score_entry("T")["perk"] == "pocket_money", "the perk goes on the leaderboard entry")
+	_trip.food = 100
+	_trip.pass_time(1.0)
+	_expect(_trip.food == 100 - ceili(8 * _trip.COOK_FOOD_SHARE), "the Cook makes food last (left %d)" % _trip.food)
+	_trip.new_trip(Routes.first_playable(), 23, Survivor.BASE_ROLES, "beater")
+	_expect(_trip.has_vehicle and _trip.vehicle_health == 45, "Old Beater starts with a car")
+
+
+## Every road event is well formed, and every outcome can be applied.
+func _check_road_events() -> void:
+	# RoadEvents uses the Trip autoload, so it's loaded by path (see _check_scavenge_exit).
+	var road_events: GDScript = load("res://scripts/trip/road_events.gd")
+	var known := ["food", "fuel", "ammo", "medkits", "scrap", "money", "hurt", "hurt_all", "heal_all", "car", "days", "award"]
+	var events: Array = road_events.get("EVENTS")
+	var rare_events: Array = road_events.get("RARE_EVENTS")
+	var all_events: Array = events + rare_events
+	_expect(events.size() >= 12, "there should be plenty of road events")
+	for event: Dictionary in all_events:
+		var choices: Array = event["choices"]
+		_expect(choices.size() >= 2 and choices.size() <= 4, "%s has 2-4 choices" % event["id"])
+		var has_free_choice := false
+		for choice: Dictionary in choices:
+			if not choice.has("role") and not choice.has("needs"):
+				has_free_choice = true
+			var total := 0.0
+			for outcome: Dictionary in choice["outcomes"]:
+				total += float(outcome["chance"])
+				for key: String in outcome["effects"]:
+					_expect(known.has(key), "%s uses a known effect (%s)" % [event["id"], key])
+				_trip.new_trip(Routes.first_playable(), 30, Survivor.BASE_ROLES, "beater")
+				road_events.call("apply_effects", outcome["effects"], _trip.rng)
+			_expect(absf(total - 1.0) < 0.001, "%s choice chances add up to 1" % event["id"])
+		_expect(has_free_choice, "%s always has a choice anyone can pick" % event["id"])
+	for rare: Dictionary in rare_events:
+		_expect(not Unlocks.award(rare["id"]).is_empty(), "rare event %s has an award" % rare["id"])
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	var picked: Array = road_events.call("pick_for_stretch", rng, func(_id: String) -> bool: return false)
+	_expect(picked.size() >= 2 and picked.size() <= 3, "a stretch has 2-3 choice events")
+
+
+func _check_choice_event_on_road() -> void:
+	_new_trip(31)
+	_trip.food = 50
+	await _change_to("road")
+	var road := current_scene
+	var first_event: Dictionary = (load("res://scripts/trip/road_events.gd") as GDScript).get("EVENTS")[0]
+	road.call("open_event", first_event)
+	await process_frame
+	var dialog: Node = road.get("_dialog")
+	_expect(dialog != null, "a choice event opens a dialog")
+	if dialog == null:
+		return
+	var start_x: float = road.get("_x")
+	for index: int in 10:
+		await process_frame
+	_expect(is_equal_approx(float(road.get("_x")), start_x), "the road waits while the event is open")
+	var food_before: int = _trip.food
+	dialog.call("choose", first_event["choices"][0])
+	_expect(_trip.food == food_before - 10, "sharing food costs 10 food")
+	dialog.call("close")
+	await process_frame
+	_expect(road.get("_dialog") == null, "Continue closes the event")
+
+
+## Hidden stashes: some levels have them, and every ledge is within jump reach.
+func _check_stashes() -> void:
+	var rng := RandomNumberGenerator.new()
+	var with_stash := 0
+	for seed_value: int in 40:
+		rng.seed = seed_value
+		var layout := LevelLayout.generate(rng, 3)
+		if layout.stash_spots.is_empty():
+			continue
+		with_stash += 1
+		var ledges: Array[Rect2] = []
+		for solid: Dictionary in layout.solids:
+			if solid["kind"] == "secret":
+				ledges.append(solid["rect"])
+		_expect(ledges.size() == 3, "a stash has 3 ledges")
+		for index: int in range(1, ledges.size()):
+			var rise := ledges[index - 1].position.y - ledges[index].position.y
+			_expect(rise > 0.0 and rise <= 45.0, "stash ledges rise at most 45 px each")
+	_expect(with_stash > 5 and with_stash < 35, "about half the levels hide a stash (%d of 40)" % with_stash)
+
+
+func _check_meta_screens() -> void:
+	_trip.route = Routes.first_playable()
+	await _change_to("prepare")
+	_expect(current_scene != null and current_scene.name == "Prepare", "prepare screen should load")
+	current_scene.call("start_trip")
+	var to_town := await _wait_for_scene("Town")
+	_expect(to_town, "Start trip goes to the store")
+	_expect(_trip.party.size() == 4, "the prepared party has 4 survivors")
+	await _change_to("awards")
+	_expect(current_scene != null and current_scene.name == "Awards", "awards screen should load")
 
 
 func _finish() -> void:

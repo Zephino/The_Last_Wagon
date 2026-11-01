@@ -4,6 +4,7 @@ extends Node2D
 ## wheel (speed up, brake, jump wrecks, run over enemies).
 ## Walking: you have no car (or it died). Walk on, shoot enemies, and
 ## hotwire any abandoned car you find. Time passes much faster on foot.
+## Along the way, choice events (RoadEvents) stop the trip and ask what to do.
 
 enum Mode { DRIVING, WALKING, HOTWIRE, DONE }
 
@@ -62,6 +63,9 @@ var _hud_status: Label
 var _hud_party: Label
 var _hud_banner: Label
 var _hud_prompt: Label
+var _choice_events: Array[Dictionary] = []
+var _choice_xs: Array[float] = []
+var _dialog: EventDialog
 
 
 func _ready() -> void:
@@ -82,10 +86,14 @@ func _ready() -> void:
 	_build_hud()
 	_set_mode(Mode.DRIVING if Trip.has_vehicle else Mode.WALKING)
 	_next_event_x = Trip.rng.randf_range(150, 300)
+	_plan_choice_events()
 
 
 func _process(delta: float) -> void:
 	delta = minf(delta, 0.05)
+	if _dialog != null:
+		_refresh_hud()
+		return
 	_fire_timer -= delta
 	_hurt_timer -= delta
 	_banner_time -= delta
@@ -102,6 +110,7 @@ func _process(delta: float) -> void:
 		_update_walkers(delta)
 		_update_shots(delta)
 		_maybe_road_event()
+		_maybe_choice_event()
 		if _x >= _length:
 			_arrive()
 	_actor.position = Vector2(_x, _y)
@@ -315,6 +324,7 @@ func _update_walkers(delta: float) -> void:
 		if _mode == Mode.DRIVING:
 			if absf(gap) < CAR_HALF_WIDTH + 3.0 and _y > -10.0:
 				Trip.vehicle_health = maxi(0, Trip.vehicle_health - SPLAT_DAMAGE)
+				Progress.add_stat("enemies")
 				_remove_walker(walker)
 				_banner("Splat. Car -%d%%" % SPLAT_DAMAGE)
 		elif gap > -6.0 and gap < 10.0 and _hurt_timer <= 0.0:
@@ -359,6 +369,7 @@ func _update_shots(delta: float) -> void:
 
 func _damage_walker(walker: RoadWalker, amount: int) -> void:
 	if walker.hit(amount):
+		Progress.add_stat("enemies")
 		_remove_walker(walker)
 
 
@@ -401,6 +412,43 @@ func _maybe_road_event() -> void:
 	_banner(text)
 
 
+## Spreads this stretch's choice events evenly along the road.
+func _plan_choice_events() -> void:
+	_choice_events = RoadEvents.pick_for_stretch(Trip.rng, Progress.has_award)
+	var count := _choice_events.size()
+	for index: int in count:
+		var spot := _length * float(index + 1) / float(count + 1)
+		_choice_xs.append(spot + Trip.rng.randf_range(-40.0, 40.0))
+
+
+## Opens the next choice event once you reach it, when no danger is near.
+func _maybe_choice_event() -> void:
+	if _choice_xs.is_empty() or _danger or _x < _choice_xs[0] or _mode == Mode.DONE:
+		return
+	_choice_xs.pop_front()
+	open_event(_choice_events.pop_front())
+
+
+## Shows a choice event and waits (also used by tests).
+func open_event(event: Dictionary) -> void:
+	_speed = 0.0
+	_dialog = EventDialog.new()
+	_dialog.event = event
+	_dialog.closed.connect(_on_event_closed)
+	add_child(_dialog)
+
+
+func _on_event_closed() -> void:
+	_dialog = null
+	if not Trip.anyone_standing():
+		Trip.log_message("Everyone went down on the road. Your party crawled back to %s." % Trip.current_stop()["city"])
+		_banner("Everyone is down...")
+		_finish_leg(false)
+		return
+	Trip.ensure_active_standing()
+	_update_actor_texture()
+
+
 func _arrive() -> void:
 	_finish_leg(true)
 	Trip.arrive_at_next_stop()
@@ -428,7 +476,7 @@ func _set_mode(mode: Mode) -> void:
 
 
 func _update_actor_texture() -> void:
-	var texture: Texture2D = PixelArt.car(Color("8a3a2a")) if _mode == Mode.DRIVING else Trip.active().sprite()
+	var texture: Texture2D = PixelArt.car(Trip.car_color) if _mode == Mode.DRIVING else Trip.active().sprite()
 	_actor.texture = texture
 	_actor.offset = Vector2(0, -texture.get_height() / 2.0)
 

@@ -4,14 +4,21 @@ extends RefCounted
 ## ground, gaps, steps, floating platforms and buildings with a roof to
 ## climb. It only decides where things go; ScavengeScreen draws them.
 ## Sizes are checked against the jump: about 50 px high and 60 px across.
+## About half the levels hide a secret stash: faint ledges climbing high
+## above the street, with a golden crate at the top.
 
 const TILE := 16.0
 const GROUND_BOTTOM := 200.0
+const STASH_CHANCE := 0.5
+## How far each hidden ledge is above the one below (the jump reaches ~50).
+const STASH_STEP_RISE := 40.0
 
-## Each solid: {"rect": Rect2, "kind": "ground" | "platform" | "building"}.
+## Each solid: {"rect": Rect2, "kind": "ground" | "platform" | "building" | "secret"}.
 var solids: Array[Dictionary] = []
 var enemy_spots: Array[Vector2] = []
 var crate_spots: Array[Vector2] = []
+## Where the golden crate sits, if this level has a hidden stash.
+var stash_spots: Array[Vector2] = []
 var player_start := Vector2(16, 0)
 var exit_spot := Vector2.ZERO
 var width := 0.0
@@ -25,7 +32,11 @@ static func generate(rng: RandomNumberGenerator, difficulty: int) -> LevelLayout
 	x = 160.0
 	var enemy_chance := minf(0.55 + difficulty * 0.04, 0.9)
 	var chunks := 9 + mini(difficulty, 7)
+	var stash_chunk := rng.randi_range(1, chunks - 2) if rng.randf() < STASH_CHANCE else -1
 	for index: int in chunks:
+		if index == stash_chunk:
+			x = layout._stash_chunk(rng, x, height)
+			continue
 		match rng.randi_range(0, 4):
 			0:
 				x = layout._flat_chunk(rng, x, height, enemy_chance)
@@ -101,4 +112,23 @@ func _building_chunk(rng: RandomNumberGenerator, x: float, height: int, enemy_ch
 	crate_spots.append(Vector2(building.position.x + building.size.x * 0.7, building.position.y))
 	_maybe_enemy(rng, Vector2(building.position.x + building.size.x * 0.3, building.position.y), enemy_chance * 0.7)
 	_maybe_enemy(rng, Vector2(x + w - TILE, top), enemy_chance * 0.5)
+	return x + w
+
+
+## Flat ground with faint ledges zig-zagging up to a golden crate.
+func _stash_chunk(rng: RandomNumberGenerator, x: float, height: int) -> float:
+	var w := 12 * TILE
+	var top := _top(height)
+	_ground(x, w, height)
+	var ledge_x := x + 2 * TILE
+	var ledge_y := top
+	var direction := 1.0
+	for step: int in 3:
+		ledge_y -= STASH_STEP_RISE
+		ledge_x += direction * 40.0
+		direction = -direction
+		_solid(Rect2(ledge_x, ledge_y, 24, 6), "secret")
+	stash_spots.append(Vector2(ledge_x + 12, ledge_y))
+	if rng.randf() < 0.5:
+		enemy_spots.append(Vector2(x + w - TILE, top))
 	return x + w

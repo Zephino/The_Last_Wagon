@@ -12,6 +12,7 @@ var _sent := false
 
 
 func _ready() -> void:
+	Trip.record_end()
 	var root := UiKit.make_layer(self)
 	var background := ColorRect.new()
 	background.color = Color("0c0a10")
@@ -24,6 +25,7 @@ func _ready() -> void:
 	var buttons := UiKit.hbox(8)
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	buttons.add_child(UiKit.button("Leaderboard", Trip.go.bind("leaderboard"), 13))
+	buttons.add_child(UiKit.button("Awards", Trip.go.bind("awards"), 13))
 	buttons.add_child(UiKit.button("New trip", Trip.go.bind("title"), 13))
 	column.add_child(buttons)
 	_client = OnlineClient.new()
@@ -40,7 +42,7 @@ func _add_summary(column: VBoxContainer) -> void:
 	var flavor := UiKit.wrapped(line, 12, UiKit.TEXT, 400)
 	flavor.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(flavor)
-	column.add_child(UiKit.label("Apocalypse: %s" % Trip.apocalypse.title(), 11, UiKit.DIM))
+	column.add_child(UiKit.label("Apocalypse: %s    Perk: %s" % [Trip.apocalypse.title(), Unlocks.perk(Trip.perk_id)["name"]], 11, UiKit.DIM))
 	column.add_child(UiKit.label("Stops reached: %d of %d    Days on the road: %d" % [
 		Trip.stop_index, Trip.total_stops(), int(Trip.days) + 1], 11))
 	column.add_child(UiKit.label("Miles traveled: %d    Survivors standing: %d of %d" % [

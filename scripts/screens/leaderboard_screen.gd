@@ -20,7 +20,7 @@ func _ready() -> void:
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(background)
 	var column := UiKit.vbox(6)
-	UiKit.pin(column, root, Vector2(0.5, 0), Vector2(-300, 16), Vector2(600, 0))
+	UiKit.pin(column, root, Vector2(0.5, 0), Vector2(-310, 16), Vector2(620, 0))
 	var title := UiKit.label("LEADERBOARD", 26, UiKit.ACCENT)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(title)
@@ -43,9 +43,7 @@ func _route_picker() -> HBoxContainer:
 	var row := UiKit.hbox(6)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	for route: Dictionary in Routes.all():
-		if not route["playable"]:
-			continue
-		var pick := UiKit.button(route["name"], _on_route.bind(str(route["id"])), 11)
+		var pick := UiKit.button(route["name"], _on_route.bind(str(route["id"])), 9)
 		pick.toggle_mode = true
 		pick.button_pressed = route["id"] == _route_id
 		row.add_child(pick)
@@ -88,12 +86,14 @@ func _row(rank: int, entry: Dictionary) -> HBoxContainer:
 	var finished := bool(entry.get("finished", false))
 	var color := UiKit.GOOD if finished else UiKit.TEXT
 	row.add_child(_cell("%d." % rank, 30, UiKit.DIM))
-	row.add_child(_cell(str(entry.get("name", "?")), 110, UiKit.ACCENT if rank <= 3 else UiKit.TEXT))
+	row.add_child(_cell(str(entry.get("name", "?")), 90, UiKit.ACCENT if rank <= 3 else UiKit.TEXT))
 	var result := "Made it!" if finished else "Reached stop %d of %d" % [int(entry.get("stops", 0)), int(entry.get("total_stops", 0))]
-	row.add_child(_cell(result, 140, color))
+	row.add_child(_cell(result, 120, color))
 	row.add_child(_cell("%d days" % int(entry.get("days", 0)), 70, UiKit.TEXT))
-	row.add_child(_cell("%d survivors" % int(entry.get("survivors", 0)), 90, UiKit.TEXT))
-	row.add_child(_cell(str(entry.get("apocalypse", "")).replace("+", " + "), 120, UiKit.DIM))
+	row.add_child(_cell("%d survivors" % int(entry.get("survivors", 0)), 80, UiKit.TEXT))
+	row.add_child(_cell(str(entry.get("apocalypse", "")).replace("+", " + "), 100, UiKit.DIM))
+	var perk_id := str(entry.get("perk", "none"))
+	row.add_child(_cell("" if perk_id == "none" else Unlocks.perk(perk_id)["name"], 80, UiKit.DIM))
 	return row
 
 

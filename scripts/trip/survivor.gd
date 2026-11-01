@@ -1,9 +1,14 @@
 class_name Survivor
 extends RefCounted
 ## One member of the party. Each survivor has a role that changes how they
-## play in levels and what they help with on the road.
+## play in levels and what they help with on the road. The first four roles
+## are always available; Cook and Thief are unlocked with awards.
 
-enum Role { MECHANIC, MEDIC, GUNNER, SCOUT }
+enum Role { MECHANIC, MEDIC, GUNNER, SCOUT, COOK, THIEF }
+
+const BASE_ROLES: Array[Role] = [Role.SCOUT, Role.GUNNER, Role.MEDIC, Role.MECHANIC]
+const ALL_ROLES: Array[Role] = [Role.SCOUT, Role.GUNNER, Role.MEDIC, Role.MECHANIC, Role.COOK, Role.THIEF]
+const ROLE_IDS: Array[String] = ["mechanic", "medic", "gunner", "scout", "cook", "thief"]
 
 const MAX_HEALTH := 100
 
@@ -32,16 +37,45 @@ func _init(survivor_name: String, survivor_role: Role, skin_tone: Color, hair_co
 	hair = hair_color
 
 
-## A party of four, one of each role, with random names and looks.
+## A party of four, one of each base role, with random names and looks.
 static func roll_party(rng: RandomNumberGenerator) -> Array[Survivor]:
+	return make_party(rng, BASE_ROLES)
+
+
+## A party with the given roles (one survivor each), random names and looks.
+static func make_party(rng: RandomNumberGenerator, roles: Array[Role]) -> Array[Survivor]:
 	var names := NAMES.duplicate()
 	var party: Array[Survivor] = []
-	for role_value: int in [Role.SCOUT, Role.GUNNER, Role.MEDIC, Role.MECHANIC]:
+	for role_value: Role in roles:
 		var picked: String = names.pop_at(rng.randi_range(0, names.size() - 1))
 		var tone: Color = SKIN_TONES[rng.randi_range(0, SKIN_TONES.size() - 1)]
 		var hair_color: Color = HAIR_COLORS[rng.randi_range(0, HAIR_COLORS.size() - 1)]
-		party.append(Survivor.new(picked, role_value as Role, tone, hair_color))
+		party.append(Survivor.new(picked, role_value, tone, hair_color))
 	return party
+
+
+static func role_from_id(role_id: String) -> Role:
+	return maxi(0, ROLE_IDS.find(role_id)) as Role
+
+
+static func name_of_role(role_value: Role) -> String:
+	return ["Mechanic", "Medic", "Gunner", "Scout", "Cook", "Thief"][role_value]
+
+
+static func perk_of_role(role_value: Role) -> String:
+	match role_value:
+		Role.MECHANIC:
+			return "Uses less fuel. Better repairs. Hotwires cars fast."
+		Role.MEDIC:
+			return "Medkits heal and revive much more."
+		Role.GUNNER:
+			return "Double damage. Shoots faster."
+		Role.COOK:
+			return "Makes food last: the party eats 40% less."
+		Role.THIEF:
+			return "Finds extra money everywhere."
+		_:
+			return "Runs faster, jumps higher, finds extra loot."
 
 
 func is_downed() -> bool:
@@ -64,23 +98,15 @@ func revive(to_health: int) -> void:
 
 
 func role_name() -> String:
-	return ["Mechanic", "Medic", "Gunner", "Scout"][role]
+	return name_of_role(role)
 
 
 func perk() -> String:
-	match role:
-		Role.MECHANIC:
-			return "Uses less fuel. Better repairs. Hotwires cars fast."
-		Role.MEDIC:
-			return "Medkits heal and revive much more."
-		Role.GUNNER:
-			return "Double damage. Shoots faster."
-		_:
-			return "Runs faster, jumps higher, finds extra loot."
+	return perk_of_role(role)
 
 
 func shirt_color() -> Color:
-	return [Color("d08a2e"), Color("e8e8e8"), Color("6f7d3c"), Color("3f6fb0")][role]
+	return [Color("d08a2e"), Color("e8e8e8"), Color("6f7d3c"), Color("3f6fb0"), Color("b8483a"), Color("4a4a5a")][role]
 
 
 func move_speed() -> float:

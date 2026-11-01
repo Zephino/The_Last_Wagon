@@ -11,12 +11,16 @@ const SCENES: Dictionary = {
 	"end": "res://scenes/end.tscn",
 	"leaderboard": "res://scenes/leaderboard.tscn",
 	"settings": "res://scenes/settings.tscn",
+	"prepare": "res://scenes/prepare.tscn",
+	"awards": "res://scenes/awards.tscn",
 }
 const STARTING_MONEY := 600
 const FOOD_PER_PERSON_PER_DAY := 2
 const STARVING_DAMAGE := 8
 const MAX_MESSAGES := 6
 const REPAIR_SCRAP_COST := 5
+## With a Cook standing, the party eats this share of its normal food.
+const COOK_FOOD_SHARE := 0.6
 
 var rng := RandomNumberGenerator.new()
 var route: Dictionary = {}
@@ -37,6 +41,10 @@ var has_vehicle := false
 var vehicle_health := 0
 var stop_scavenged := false
 var won := false
+var perk_id := "none"
+var car_color := Color("8a3a2a")
+## Set once the end of this trip has been counted for awards.
+var end_recorded := false
 var _day_carry := 0.0
 
 
@@ -44,12 +52,14 @@ func _ready() -> void:
 	new_trip(Routes.first_playable(), int(Time.get_unix_time_from_system()))
 
 
-## Starts a fresh run. On foot, no supplies, random apocalypse and party.
-func new_trip(chosen_route: Dictionary, seed_value: int) -> void:
+## Starts a fresh run with the chosen survivors, starting perk and car color.
+## On foot, no supplies (apart from the perk), random apocalypse.
+func new_trip(chosen_route: Dictionary, seed_value: int, roles: Array[Survivor.Role] = Survivor.BASE_ROLES,
+		chosen_perk := "none", color_id := "classic_red") -> void:
 	rng.seed = seed_value
 	route = chosen_route
 	apocalypse = Apocalypse.roll(rng)
-	party = Survivor.roll_party(rng)
+	party = Survivor.make_party(rng, roles)
 	messages.clear()
 	active_index = 0
 	stop_index = 0
@@ -65,8 +75,27 @@ func new_trip(chosen_route: Dictionary, seed_value: int) -> void:
 	vehicle_health = 0
 	stop_scavenged = false
 	won = false
+	end_recorded = false
 	_day_carry = 0.0
+	perk_id = chosen_perk
+	car_color = Unlocks.car_color(color_id)
+	_apply_perk()
 	log_message(apocalypse.intro())
+
+
+func _apply_perk() -> void:
+	match perk_id:
+		"pocket_money":
+			money += 150
+		"spare_tank":
+			fuel += 10.0
+		"first_aid":
+			medkits += 2
+		"ammo_belt":
+			ammo += 40
+		"beater":
+			has_vehicle = true
+			vehicle_health = 45
 
 
 func go(screen: String) -> void:
@@ -162,6 +191,8 @@ func pass_time(amount_days: float) -> void:
 
 func _eat_for_one_day() -> void:
 	var needed := party.size() * FOOD_PER_PERSON_PER_DAY
+	if has_standing_role(Survivor.Role.COOK):
+		needed = ceili(needed * COOK_FOOD_SHARE)
 	if food >= needed:
 		food -= needed
 		return
@@ -236,6 +267,7 @@ func arrive_at_next_stop() -> void:
 	stop_index += 1
 	stop_scavenged = false
 	log_message("Arrived in %s." % stop_label(stop))
+	Progress.earn("first_steps")
 
 
 func is_at_finish() -> bool:
@@ -259,5 +291,15 @@ func score_entry(player_name: String) -> Dictionary:
 		"survivors": standing_count(),
 		"miles": miles_traveled,
 		"apocalypse": apocalypse.id(),
+		"perk": perk_id,
 		"version": str(ProjectSettings.get_setting("application/config/version", "")),
 	}
+
+
+## Counts this trip's end for awards (once, however many times it's called).
+func record_end() -> void:
+	if end_recorded:
+		return
+	end_recorded = true
+	Progress.record_trip_end(won, str(route.get("id", "")), int(days) + 1, standing_count(), party.size(),
+		not has_vehicle, apocalypse.is_mixed())

@@ -28,7 +28,7 @@ const SHOPKEEPER_LINES: Array[String] = [
 
 const WIN_LINES: Array[String] = [
 	"You reached the coast. The beach is overrun, but it's YOUR overrun beach now.",
-	"Miami at last. It's hot, it's ruined, and nobody here asks about the smell.",
+	"You made it to the end of the road. It's ruined, but nobody here asks about the smell.",
 ]
 
 const LOSE_LINES: Array[String] = [
