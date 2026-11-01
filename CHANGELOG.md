@@ -1,5 +1,17 @@
 # Changelog
 
+## Version 00.01.04
+Date: 11/01/2026
+Time: 12:42 AM
+
+### Changes
+- Added `LICENSE`: Copyright (c) 2026 Zephino, All Rights Reserved, with the same wording as Wave Defence and Mythriven.
+- Added `CREDITS.md`, listing the Godot engine (MIT license) as the only outside tool, and stating that all code, art and text were made for this game.
+- `README.md` now has "Copyright and credits" and "Version and changes" sections.
+
+### Reason
+The owner asked for the same copyright setup as their other games, plus a README and changelog.
+
 ## Version 00.01.03
 Date: 11/01/2026
 Time: 12:38 AM

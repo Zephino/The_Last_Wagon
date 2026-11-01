@@ -85,3 +85,19 @@ All art is placeholder pixel art drawn from code, so there are no image files ye
   lobby from FindGame/Mythriven.
 - The other routes.
 - A web build you can play in the browser.
+
+## Copyright and credits
+
+Copyright (c) 2026 Zephino. All Rights Reserved. See [`LICENSE`](LICENSE): you
+may play official builds, but not copy, change, share or sell the game without
+permission.
+
+Outside tools (currently just the Godot engine, MIT license) are listed in
+[`CREDITS.md`](CREDITS.md). Everything else (code, pixel art, names, events
+and text) was made for this game.
+
+## Version and changes
+
+The current version is in [`VERSION`](VERSION) (also shown on the title
+screen). Every change is listed in [`CHANGELOG.md`](CHANGELOG.md), newest first.
+
