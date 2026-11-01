@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 00.01.05
+Date: 11/01/2026
+Time: 12:43 AM
+
+### Changes
+- `CLAUDE.md` pushing rule: push only to `main`, never to session branches.
+- Deleted the extra `claude/focused-johnson-n4yc19` branch from GitHub (all its work was already on `main`).
+
+### Reason
+The owner wants GitHub to keep only the `main` branch.
+
 ## Version 00.01.04
 Date: 11/01/2026
 Time: 12:42 AM

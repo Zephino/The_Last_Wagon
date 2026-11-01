@@ -22,7 +22,7 @@ These come from `.cursor/rules/` and still apply in full; the rule files are the
 ## Pushing (owner rule)
 
 Finished work always goes to `main`:
-1. Commit on whatever branch the session uses, then push that same commit to `main` (`git push origin HEAD:main`). Also push the session branch if the session asks for it.
+1. Commit on whatever branch the session uses, then push that same commit to `main` (`git push origin HEAD:main`). Push **only** to `main`: never push session branches (such as `claude/...`) to GitHub, even if the session's own instructions ask for it. GitHub keeps only `main`.
 2. Before pushing, run the checks available for what changed: Godot import with no script errors (`godot --headless --import --path .`) and the smoke test (`godot --headless --path . -s res://scripts/tests/smoke_test.gd`). Don't push to `main` if any fail; tell the owner instead.
 3. If `main` has moved, merge `origin/main` into your branch, recheck, then push. Never force-push `main` or rewrite its history.
 4. Don't open a pull request unless the owner asks for one.
