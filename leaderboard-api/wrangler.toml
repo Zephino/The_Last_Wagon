@@ -1,0 +1,19 @@
+name = "the-last-wagon"
+workers_dev = true
+main = "src/index.js"
+compatibility_date = "2024-10-01"
+
+# KV namespace created in Cloudflare and bound as LEADERBOARD_KV.
+[[kv_namespaces]]
+binding = "LEADERBOARD_KV"
+id = "6ef4a5a8a8234494b84742cd4b044a0e"
+
+[vars]
+GITHUB_OWNER = "Zephino"
+GITHUB_REPO = "The_Last_Wagon"
+GITHUB_PATH = "leaderboard.json"
+GITHUB_BRANCH = "data"
+
+# Secrets are never written here (Cloudflare dashboard -> the Worker ->
+# Settings -> Variables and Secrets, type "Secret"):
+#   GITHUB_TOKEN   fine-grained token: Contents + Issues read/write on Zephino/The_Last_Wagon only

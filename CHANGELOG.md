@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 00.01.07
+Date: 11/01/2026
+Time: 1:11 AM
+
+### Changes
+- Added `leaderboard-api/`: a Cloudflare Worker (adapted from Mythriven's) for the shared leaderboard and player suggestions, with tests, a setup app and a setup guide. The leaderboard keeps the best 100 trips on the `data` branch; suggestions become GitHub Issues.
+
+### Reason
+The owner asked for a leaderboard and in-game suggestions, like their other games.
+
 ## Version 00.01.06
 Date: 11/01/2026
 Time: 12:50 AM
