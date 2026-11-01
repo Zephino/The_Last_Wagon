@@ -36,6 +36,9 @@ func _build_menu() -> void:
 		column.add_child(route_button)
 	var version := UiKit.label("v" + str(ProjectSettings.get_setting("application/config/version", "")), 9, UiKit.DIM)
 	UiKit.pin(version, root, Vector2(1, 1), Vector2(-70, -18))
+	# Godot's MIT license asks for its copyright notice to ship with the game.
+	var credit := UiKit.label("Made with Godot Engine. (c) Godot Engine contributors, MIT license.", 8, UiKit.DIM)
+	UiKit.pin(credit, root, Vector2(0, 1), Vector2(8, -16))
 
 
 func _start_trip(route: Dictionary) -> void:

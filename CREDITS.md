@@ -6,7 +6,7 @@ Third-party tools, add-ons, and assets used by The Last Wagon. Every entry needs
 | --- | --- | --- | --- | --- |
 | Godot Engine | 4.7.2 | The game engine | https://godotengine.org | MIT (https://godotengine.org/license) |
 
-Godot's MIT license asks that its copyright notice is included with any game you ship (for example on a credits screen or in a text file next to the build). Godot also bundles some open-source libraries; the full list is on the license page above.
+Godot's MIT license asks that its copyright notice is included with any game you ship. The title screen shows it: "Made with Godot Engine. (c) Godot Engine contributors, MIT license." Godot also bundles some open-source libraries; the full list is on the license page above.
 
 ## Made for this game
 

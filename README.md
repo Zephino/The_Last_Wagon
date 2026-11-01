@@ -9,6 +9,15 @@ aliens, a plague, or a mix of two.
 Made with **Godot 4.7** (GL Compatibility renderer), so it runs on PC and in
 web browsers. Phones come later.
 
+## Play it in your browser
+
+**https://zephino.github.io/The_Last_Wagon/**
+
+Every push to `main` rebuilds this automatically (see
+`.github/workflows/web.yml`): it runs the smoke test, builds the web version and
+publishes it, usually within a few minutes. If the smoke test fails, the old
+version stays up. GitHub's Settings → Pages → Source must be **GitHub Actions**.
+
 ## Play it on your computer
 
 1. Install **Godot 4.7** (the standard version, not .NET) from https://godotengine.org/download
@@ -84,7 +93,6 @@ All art is placeholder pixel art drawn from code, so there are no image files ye
 - Online co-op (a friend plays one of your survivors), reusing the 6-digit-code
   lobby from FindGame/Mythriven.
 - The other routes.
-- A web build you can play in the browser.
 
 ## Copyright and credits
 

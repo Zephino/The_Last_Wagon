@@ -1,5 +1,18 @@
 # Changelog
 
+## Version 00.01.06
+Date: 11/01/2026
+Time: 12:50 AM
+
+### Changes
+- Added a Web export preset (`export_presets.cfg`).
+- Added `.github/workflows/web.yml`: on every push to `main` it checks for script errors, runs the smoke test, builds the web version and publishes it to https://zephino.github.io/The_Last_Wagon/. If a check fails, nothing is published.
+- The title screen now credits the Godot Engine, as its MIT license asks.
+- README explains how to play in the browser. CREDITS mentions the title-screen credit.
+
+### Reason
+The owner chose a web build next, so the game can be played and tested in a browser.
+
 ## Version 00.01.05
 Date: 11/01/2026
 Time: 12:43 AM
