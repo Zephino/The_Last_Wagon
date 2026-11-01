@@ -5,6 +5,8 @@ extends Node2D
 ## Walking: you have no car (or it died). Walk on, shoot enemies, and
 ## hotwire any abandoned car you find. Time passes much faster on foot.
 ## Along the way, choice events (RoadEvents) stop the trip and ask what to do.
+## The road takes on the region it leads into (Regions): scenery, colors,
+## how many wrecks and enemies there are, and how fast fuel goes.
 
 enum Mode { DRIVING, WALKING, HOTWIRE, DONE }
 
@@ -63,6 +65,7 @@ var _hud_status: Label
 var _hud_party: Label
 var _hud_banner: Label
 var _hud_prompt: Label
+var _region := Regions.MIDWEST
 var _choice_events: Array[Dictionary] = []
 var _choice_xs: Array[float] = []
 var _dialog: EventDialog
@@ -77,6 +80,7 @@ func _ready() -> void:
 	var miles := float(next["miles"])
 	_length = clampf(miles * PIXELS_PER_MILE, MIN_LENGTH, MAX_LENGTH)
 	_px_per_mile = _length / miles
+	_region = Regions.of_stop(next)
 	Trip.ensure_active_standing()
 	_build_world()
 	_place_hazards()
@@ -126,10 +130,10 @@ func _build_world() -> void:
 	_camera = Backdrop.add_camera(self, Vector2(70, -50))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = Trip.stop_index * 31 + 5
-	Backdrop.add_skyline(self, -300, _length * 0.35 + 500, 0, apocalypse.sky_color().darkened(0.25), rng, 0.65)
-	Backdrop.add_skyline(self, -300, _length * 0.7 + 500, 0, apocalypse.sky_color().darkened(0.5), rng, 0.3)
-	var ground := apocalypse.ground_color()
-	add_child(PixelArt.ground_block(Color("3a3a3a"), ground, Vector2(-300, 0), Vector2(_length + 800, 90)))
+	var scenery := Regions.scenery_color(_region, apocalypse)
+	Backdrop.add_scenery(self, _region, -300, _length * 0.35 + 500, 0, scenery.lightened(0.12), rng, 0.65)
+	Backdrop.add_scenery(self, _region, -300, _length * 0.7 + 500, 0, scenery.darkened(0.25), rng, 0.3)
+	add_child(PixelArt.ground_block(Color("3a3a3a"), Regions.ground(_region, apocalypse), Vector2(-300, 0), Vector2(_length + 800, 90)))
 	var dash := PixelArt.solid(Color("c8b860"))
 	var dash_x := -300.0
 	while dash_x < _length + 500:
@@ -140,12 +144,13 @@ func _build_world() -> void:
 
 func _place_hazards() -> void:
 	var rng := Trip.rng
+	var region := Regions.info(_region)
 	var x := 260.0
 	while x < _length - 160.0:
-		if rng.randf() < 0.45:
+		if rng.randf() < float(region["wreck_share"]):
 			_add_wreck(x)
 		else:
-			var count := rng.randi_range(2, 4) + int(Trip.stop_index / 3.0)
+			var count := rng.randi_range(2, 4) + mini(int(Trip.stop_index / 3.0), 4) + int(region["extra_walkers"])
 			for index: int in count:
 				_add_walker(x + index * 14.0)
 		x += rng.randf_range(220, 380)
@@ -198,7 +203,7 @@ func _drive(delta: float) -> void:
 	_x += dx
 	var miles := dx / _px_per_mile
 	_miles_driven += miles
-	Trip.fuel = maxf(0.0, Trip.fuel - miles * Trip.fuel_per_mile())
+	Trip.fuel = maxf(0.0, Trip.fuel - miles * Trip.fuel_per_mile() * float(Regions.info(_region)["fuel"]))
 	_vy += GRAVITY * delta
 	_y += _vy * delta
 	if _y >= 0.0:
@@ -414,7 +419,7 @@ func _maybe_road_event() -> void:
 
 ## Spreads this stretch's choice events evenly along the road.
 func _plan_choice_events() -> void:
-	_choice_events = RoadEvents.pick_for_stretch(Trip.rng, Progress.has_award)
+	_choice_events = RoadEvents.pick_for_stretch(Trip.rng, Progress.has_award, _region)
 	var count := _choice_events.size()
 	for index: int in count:
 		var spot := _length * float(index + 1) / float(count + 1)
@@ -516,7 +521,7 @@ func _refresh_hud() -> void:
 	var next := Trip.next_stop()
 	var destination: String = Trip.stop_label(next) if not next.is_empty() else Trip.stop_label(Trip.current_stop())
 	var miles_left := maxf(0.0, (_length - _x) / _px_per_mile)
-	_hud_route.text = "%s  ->  %s    %d mi left" % [Trip.current_stop()["city"], destination, ceili(miles_left)]
+	_hud_route.text = "%s  ->  %s    %d mi left   (%s)" % [Trip.current_stop()["city"], destination, ceili(miles_left), Regions.display_name(_region)]
 	_hud_progress.value = clampf(_x / _length, 0.0, 1.0)
 	_hud_status.text = "Day %d    %s    %s" % [int(Trip.days) + 1, UiKit.vehicle_text(), UiKit.supplies_text()]
 	var lines: Array[String] = []

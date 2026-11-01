@@ -36,7 +36,8 @@ func _build() -> void:
 	background.color = Color("0c0a10")
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.add_child(background)
-	var title := UiKit.label("Prepare: %s" % Trip.route.get("name", ""), 18, UiKit.ACCENT)
+	var stops: Array = Trip.route.get("stops", [])
+	var title := UiKit.label("Prepare: %s  (%d stops, %s)" % [Trip.route.get("name", ""), stops.size(), Routes.length_name(Trip.route)], 18, UiKit.ACCENT)
 	UiKit.pin(title, _root, Vector2(0.5, 0), Vector2(-300, 8), Vector2(600, 0))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var left := UiKit.vbox(3)

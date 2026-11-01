@@ -138,6 +138,132 @@ const EVENTS: Array[Dictionary] = [
 				{"chance": 1.0, "text": "They wave you off with tongs. No hard feelings.", "effects": {}}]}]},
 ]
 
+## Events that only happen in one region (see Regions).
+const REGION_EVENTS: Dictionary = {
+	"northeast": [
+		{"id": "subway", "title": "Subway Entrance", "text": "Stairs lead down into a dark subway station. The trains stopped years ago. Something down there is humming.",
+			"choices": [
+				{"label": "Search the station", "outcomes": [
+					{"chance": 0.6, "text": "A vending machine graveyard. Snacks for days.", "effects": {"food": 20}},
+					{"chance": 0.4, "text": "The humming was not a machine.", "effects": {"hurt": 20, "food": 8}}]},
+				{"label": "Let the Scout check it first", "role": "scout", "outcomes": [
+					{"chance": 1.0, "text": "In and out, quiet as a mouse, with a backpack of supplies.", "effects": {"food": 12, "medkits": 1}}]},
+				{"label": "Keep driving", "outcomes": [
+					{"chance": 1.0, "text": "You don't need to know what was humming.", "effects": {}}]}]},
+		{"id": "traffic_jam", "title": "The Eternal Traffic Jam", "text": "Six lanes of abandoned cars, bumper to bumper, for miles. Rush hour never ended.",
+			"choices": [
+				{"label": "Weave through slowly", "outcomes": [
+					{"chance": 1.0, "text": "It takes forever, but you strip a few cars on the way.", "effects": {"days": 0.6, "scrap": 6, "fuel": 3}}]},
+				{"label": "Take the shoulder fast", "outcomes": [
+					{"chance": 0.6, "text": "You squeeze past with inches to spare.", "effects": {}},
+					{"chance": 0.4, "text": "Inches were not enough.", "effects": {"car": -20}}]}]},
+		{"id": "rooftop_garden", "title": "Rooftop Garden", "text": "Someone grew vegetables on an apartment roof. A sign reads TAKE WHAT YOU NEED, LEAVE WHAT YOU CAN.",
+			"choices": [
+				{"label": "Take some, leave some scrap", "needs": {"scrap": 3}, "outcomes": [
+					{"chance": 1.0, "text": "Fair trade. It feels good to be decent.", "effects": {"scrap": -3, "food": 20, "heal_all": 10}}]},
+				{"label": "Take everything", "outcomes": [
+					{"chance": 0.5, "text": "Lots of food. Nobody saw. Probably.", "effects": {"food": 30}},
+					{"chance": 0.5, "text": "The gardener saw. The gardener had a shovel.", "effects": {"food": 15, "hurt": 15}}]}]},
+	],
+	"midwest": [
+		{"id": "corn_maze", "title": "Endless Corn", "text": "Corn on both sides, taller than the car. A path leads in. A scarecrow points the other way.",
+			"choices": [
+				{"label": "Follow the path into the corn", "outcomes": [
+					{"chance": 0.5, "text": "A farmhouse with a full cellar. The scarecrow was wrong.", "effects": {"food": 25, "ammo": 10, "days": 0.3}},
+					{"chance": 0.5, "text": "You get lost for hours. The scarecrow was right.", "effects": {"days": 0.8, "hurt_all": 5}}]},
+				{"label": "Trust the scarecrow", "outcomes": [
+					{"chance": 1.0, "text": "You drive on. The scarecrow seems pleased.", "effects": {}}]}]},
+		{"id": "grain_silo", "title": "Grain Silo", "text": "A huge grain silo, door ajar. Grain keeps for a long time. So do some other things.",
+			"choices": [
+				{"label": "Fill some sacks", "outcomes": [
+					{"chance": 1.0, "text": "Bland, filling, and almost bug-free.", "effects": {"food": 30, "days": 0.3}}]},
+				{"label": "Let the Cook make it tasty", "role": "cook", "outcomes": [
+					{"chance": 1.0, "text": "Somehow, porridge. Everyone feels human again.", "effects": {"food": 30, "heal_all": 15}}]},
+				{"label": "Skip it", "outcomes": [
+					{"chance": 1.0, "text": "Plenty more corn where that came from.", "effects": {}}]}]},
+		{"id": "tornado", "title": "Funnel Cloud", "text": "A tornado is touching down a few miles away. It's heading roughly toward you. Roughly.",
+			"choices": [
+				{"label": "Shelter in a ditch", "outcomes": [
+					{"chance": 1.0, "text": "It passes. You're muddy, but whole.", "effects": {"days": 0.4}}]},
+				{"label": "Outrun it", "outcomes": [
+					{"chance": 0.6, "text": "Pedal to the metal. You win!", "effects": {"fuel": -3}},
+					{"chance": 0.4, "text": "It nearly wins. Things fly off the roof.", "effects": {"car": -25, "food": -10}}]}]},
+	],
+	"mountains": [
+		{"id": "rockslide", "title": "Rockslide", "text": "Rocks block the mountain road. More are rattling down from above.",
+			"choices": [
+				{"label": "Clear a path", "outcomes": [
+					{"chance": 0.7, "text": "Hard work, but you get through.", "effects": {"days": 0.5, "hurt_all": 5}},
+					{"chance": 0.3, "text": "A second slide catches someone.", "effects": {"days": 0.5, "hurt": 25}}]},
+				{"label": "Let the Mechanic rig a winch", "role": "mechanic", "outcomes": [
+					{"chance": 1.0, "text": "Rope, a pulley, and the car's engine. Done in no time.", "effects": {"scrap": -2}}]},
+				{"label": "Take the long way around", "outcomes": [
+					{"chance": 1.0, "text": "A whole extra day of switchbacks.", "effects": {"days": 1.0, "fuel": -3}}]}]},
+		{"id": "ranger_tower", "title": "Ranger Lookout", "text": "An old fire lookout tower on a ridge. Someone might have left supplies up there.",
+			"choices": [
+				{"label": "Climb up", "outcomes": [
+					{"chance": 0.7, "text": "A first-aid kit and a stunning view of the end of the world.", "effects": {"medkits": 1, "heal_all": 5}},
+					{"chance": 0.3, "text": "A rotten step gives way.", "effects": {"hurt": 20}}]},
+				{"label": "Keep going", "outcomes": [
+					{"chance": 1.0, "text": "The view would have been nice, though.", "effects": {}}]}]},
+		{"id": "hot_spring", "title": "Hot Spring", "text": "Steam rises from a natural hot spring. It looks clean. It smells like eggs.",
+			"choices": [
+				{"label": "Everybody in", "outcomes": [
+					{"chance": 0.8, "text": "Pure bliss. Sore muscles melt away.", "effects": {"heal_all": 25, "days": 0.4}},
+					{"chance": 0.2, "text": "Something else liked the spring too.", "effects": {"hurt_all": 10, "days": 0.2}}]},
+				{"label": "No time", "outcomes": [
+					{"chance": 1.0, "text": "You drive on, still smelling the eggs.", "effects": {}}]}]},
+	],
+	"desert": [
+		{"id": "mirage", "title": "Shimmering Gas Station", "text": "A gas station shimmers in the heat ahead. Or does it?",
+			"choices": [
+				{"label": "Drive toward it", "outcomes": [
+					{"chance": 0.5, "text": "It's real! The pumps still work, barely.", "effects": {"fuel": 10}},
+					{"chance": 0.5, "text": "It was a mirage. You wasted fuel finding out.", "effects": {"fuel": -4, "days": 0.3}}]},
+				{"label": "Stay on the road", "outcomes": [
+					{"chance": 1.0, "text": "In the mirror, the station flickers and vanishes.", "effects": {}}]}]},
+		{"id": "sandstorm", "title": "Sandstorm", "text": "A brown wall of sand rolls across the desert toward the road.",
+			"choices": [
+				{"label": "Hunker down", "outcomes": [
+					{"chance": 1.0, "text": "Sand everywhere. In the food. In your teeth.", "effects": {"days": 0.6, "food": -5}}]},
+				{"label": "Drive through it", "outcomes": [
+					{"chance": 0.5, "text": "Blind driving, lucky landing.", "effects": {}},
+					{"chance": 0.5, "text": "Sand in the engine. It is not happy.", "effects": {"car": -20, "hurt_all": 5}}]}]},
+		{"id": "water_tank", "title": "Water Tower", "text": "An old water tower by the tracks. A ladder, a valve, and a lot of rust.",
+			"choices": [
+				{"label": "Refill everything", "outcomes": [
+					{"chance": 0.8, "text": "Warm, rusty, wonderful water. Everyone feels better.", "effects": {"heal_all": 15}},
+					{"chance": 0.2, "text": "Rusty water is still rusty. A few stomachs disagree.", "effects": {"hurt_all": 8}}]},
+				{"label": "Let the Medic test it first", "role": "medic", "outcomes": [
+					{"chance": 1.0, "text": "Boiled and filtered. Safe and refreshing.", "effects": {"heal_all": 20}}]}]},
+	],
+	"south": [
+		{"id": "gator", "title": "Gator on the Road", "text": "An alligator lies across the road, sunbathing. It is very large and very unbothered.",
+			"choices": [
+				{"label": "Wait for it to move", "outcomes": [
+					{"chance": 1.0, "text": "It moves. Eventually. Hours later.", "effects": {"days": 0.5}}]},
+				{"label": "Scare it off (5 ammo)", "needs": {"ammo": 5}, "outcomes": [
+					{"chance": 0.8, "text": "A few shots into the air and it slides into the swamp.", "effects": {"ammo": -5}},
+					{"chance": 0.2, "text": "It was not scared. It was annoyed.", "effects": {"ammo": -5, "hurt": 25}}]},
+				{"label": "Drive around through the mud", "outcomes": [
+					{"chance": 1.0, "text": "Stuck twice, unstuck twice.", "effects": {"car": -10, "fuel": -2}}]}]},
+		{"id": "hurricane", "title": "Hurricane Warning", "text": "The sky goes green. The wind picks up. An emergency siren wails somewhere, still working.",
+			"choices": [
+				{"label": "Shelter in a church", "outcomes": [
+					{"chance": 1.0, "text": "You ride out the storm with other survivors, who share their food.", "effects": {"days": 1.0, "food": 10}}]},
+				{"label": "Race the storm", "outcomes": [
+					{"chance": 0.5, "text": "You stay just ahead of it.", "effects": {"fuel": -3}},
+					{"chance": 0.5, "text": "It catches you. Things get wet and broken.", "effects": {"car": -20, "food": -10, "hurt_all": 8}}]}]},
+		{"id": "crawfish", "title": "Crawfish Boil", "text": "Smoke and spice drift from a riverside camp. Someone is boiling crawfish and singing badly.",
+			"choices": [
+				{"label": "Ask to join", "outcomes": [
+					{"chance": 0.8, "text": "Best meal in months. They send you off with leftovers.", "effects": {"food": 20, "heal_all": 15}},
+					{"chance": 0.2, "text": "The singing gets worse. The crawfish was worth it.", "effects": {"food": 10}}]},
+				{"label": "Trade ammo for food (10 ammo)", "needs": {"ammo": 10}, "outcomes": [
+					{"chance": 1.0, "text": "A whole cooler of crawfish. Nobody complains.", "effects": {"ammo": -10, "food": 35}}]}]},
+	],
+}
+
 ## Secret events: rare, and each earns an award the first time.
 const RARE_EVENTS: Array[Dictionary] = [
 	{"id": "radio_signal", "title": "A Strange Signal", "text": "The radio, silent for days, crackles: a voice reads out numbers, then coordinates, then a recipe for pancakes.",
@@ -164,11 +290,20 @@ const RARE_EVENTS: Array[Dictionary] = [
 const RARE_CHANCE := 0.08
 
 
-## Picks the events for one stretch of road: "often" means 2 or 3.
-static func pick_for_stretch(rng: RandomNumberGenerator, has_award: Callable) -> Array[Dictionary]:
+## Chance that one of a stretch's events comes from its region's own list.
+const REGION_CHANCE := 0.6
+
+
+## Picks the events for one stretch of road: "often" means 2 or 3. Often one
+## of them belongs to the region the road runs through.
+static func pick_for_stretch(rng: RandomNumberGenerator, has_award: Callable, region := "") -> Array[Dictionary]:
 	var pool := EVENTS.duplicate()
 	var picked: Array[Dictionary] = []
 	var count := rng.randi_range(2, 3)
+	var local: Array = REGION_EVENTS.get(region, [])
+	if not local.is_empty() and rng.randf() < REGION_CHANCE:
+		picked.append(local[rng.randi_range(0, local.size() - 1)])
+		count -= 1
 	for index: int in count:
 		if pool.is_empty():
 			break

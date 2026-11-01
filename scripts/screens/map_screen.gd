@@ -68,6 +68,7 @@ func _build_status(root: Control) -> void:
 	status.add_child(column)
 	var stop := Trip.current_stop()
 	column.add_child(UiKit.label(Trip.stop_label(stop), 15, UiKit.ACCENT))
+	column.add_child(UiKit.label("%s - stop %d of %d" % [Regions.display_name(Regions.of_stop(stop)), Trip.stop_index, Trip.total_stops()], 9, UiKit.DIM))
 	var next := Trip.next_stop()
 	if not next.is_empty():
 		column.add_child(UiKit.label("Next: %s (%d mi)" % [Trip.stop_label(next), next["miles"]], 10, UiKit.DIM))

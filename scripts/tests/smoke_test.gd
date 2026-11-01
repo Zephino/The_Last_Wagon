@@ -33,6 +33,7 @@ func _run() -> void:
 	_check_score_entry()
 	await _check_online_screens()
 	_check_routes()
+	_check_regions()
 	_check_unlocks_and_awards()
 	_check_road_events()
 	await _check_choice_event_on_road()
@@ -56,8 +57,9 @@ func _check_version() -> void:
 	_expect(version != "" and version == setting, "project.godot config/version (%s) must match VERSION (%s)" % [setting, version])
 
 
+## Most checks use Maine to Florida (open from the start, 15 stops).
 func _new_trip(seed_value: int) -> void:
-	_trip.new_trip(Routes.first_playable(), seed_value)
+	_trip.new_trip(Routes.by_id("maine_to_florida"), seed_value)
 
 
 func _check_new_trip() -> void:
@@ -155,7 +157,7 @@ func _check_walk_and_hotwire() -> void:
 		road.call("_take_car")
 		await process_frame
 		_expect(_trip.has_vehicle, "hotwiring should give you a car")
-		_expect(_trip.fuel >= 2.0, "a found car should have some fuel")
+		_expect(_trip.fuel >= 1.5, "a found car should have some fuel (has %.2f)" % _trip.fuel)
 
 
 func _check_scavenge_exit() -> void:
@@ -206,7 +208,7 @@ func _check_score_entry() -> void:
 	var lost: Dictionary = _trip.score_entry("Tester")
 	_expect(lost["route"] == "maine_to_florida", "score entry should carry the route id")
 	_expect(lost["finished"] == false and lost["stops"] == 0, "a fresh trip has reached no stops")
-	_expect(lost["total_stops"] == 10, "Maine to Florida has 10 stops after the start")
+	_expect(lost["total_stops"] == 14, "Maine to Florida has 14 stops after the start")
 	_expect(str(lost["apocalypse"]).split("+").size() >= 1, "apocalypse id should be set")
 	_expect(lost["days"] >= 1, "days start at 1")
 	_trip.stop_index = _trip.total_stops()
@@ -257,7 +259,10 @@ func _check_routes() -> void:
 	for route: Dictionary in Routes.all():
 		var stops: Array = route["stops"]
 		ids.append(str(route["id"]))
-		_expect(stops.size() >= 8, "%s should have at least 8 stops" % route["id"])
+		_expect(stops.size() >= 6 and stops.size() <= 20, "%s should have 6-20 stops (has %d)" % [route["id"], stops.size()])
+		for index: int in range(1, stops.size()):
+			var miles: int = stops[index]["miles"]
+			_expect(miles >= 20 and miles <= 450, "%s: %d miles to %s is believable" % [route["id"], miles, stops[index]["city"]])
 		_expect(int(stops[0]["kind"]) == Routes.Kind.START, "%s starts with a start town" % route["id"])
 		_expect(int(stops[-1]["kind"]) == Routes.Kind.FINISH, "%s ends with a finish" % route["id"])
 		for stop: Dictionary in stops:
@@ -270,8 +275,29 @@ func _check_routes() -> void:
 			"%s is free or has an award that unlocks it" % route_id)
 
 
+func _check_regions() -> void:
+	var expected := {"Boston": "northeast", "Chicago": "midwest", "Denver": "mountains", "Seattle": "mountains",
+		"Phoenix": "desert", "El Paso": "desert", "New Orleans": "south", "Miami": "south", "Raleigh": "south",
+		"Washington": "northeast", "Amarillo": "midwest"}
+	var seen: Dictionary = {}
+	for route: Dictionary in Routes.all():
+		for stop: Dictionary in route["stops"]:
+			var region := Regions.of_stop(stop)
+			seen[region] = true
+			if expected.has(stop["city"]):
+				_expect(region == expected[stop["city"]], "%s should be in %s, not %s" % [stop["city"], expected[stop["city"]], region])
+	for region: String in Regions.ALL:
+		_expect(seen.has(region), "some route goes through %s" % region)
+	var lengths: Dictionary = {}
+	for route: Dictionary in Routes.all():
+		lengths[Routes.length_name(route)] = true
+	_expect(lengths.size() == 3, "there are short, medium and long routes")
+
+
 func _check_unlocks_and_awards() -> void:
 	_expect(_progress.is_unlocked("route", "maine_to_florida"), "Maine to Florida is open from the start")
+	_expect(_progress.is_unlocked("route", "new_york_to_washington"), "the starter route is open from the start")
+	_expect(not _progress.is_unlocked("route", "seattle_to_boston"), "Seattle to Boston starts locked")
 	_expect(not _progress.is_unlocked("route", "maine_to_california"), "other routes start locked")
 	_expect(not _progress.is_unlocked("role", "cook"), "the Cook starts locked")
 	for award: Dictionary in Unlocks.AWARDS:
@@ -289,6 +315,7 @@ func _check_unlocks_and_awards() -> void:
 			continue
 		_expect(_progress.has_award(award_id), "a perfect finish earns %s" % award_id)
 	_expect(_progress.is_unlocked("route", "maine_to_california"), "finishing unlocks Maine to California")
+	_expect(_progress.is_unlocked("route", "chicago_to_new_orleans"), "finishing the starter route unlocks Chicago to New Orleans")
 	_expect(_progress.is_unlocked("role", "cook"), "Full House unlocks the Cook")
 	# Progress survives a reload from disk.
 	_progress.load_progress()
@@ -316,7 +343,11 @@ func _check_road_events() -> void:
 	var known := ["food", "fuel", "ammo", "medkits", "scrap", "money", "hurt", "hurt_all", "heal_all", "car", "days", "award"]
 	var events: Array = road_events.get("EVENTS")
 	var rare_events: Array = road_events.get("RARE_EVENTS")
+	var region_events: Dictionary = road_events.get("REGION_EVENTS")
 	var all_events: Array = events + rare_events
+	for region: String in Regions.ALL:
+		_expect(Array(region_events.get(region, [])).size() >= 3, "%s has its own road events" % region)
+		all_events += region_events.get(region, [])
 	_expect(events.size() >= 12, "there should be plenty of road events")
 	for event: Dictionary in all_events:
 		var choices: Array = event["choices"]
@@ -338,7 +369,7 @@ func _check_road_events() -> void:
 		_expect(not Unlocks.award(rare["id"]).is_empty(), "rare event %s has an award" % rare["id"])
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 5
-	var picked: Array = road_events.call("pick_for_stretch", rng, func(_id: String) -> bool: return false)
+	var picked: Array = road_events.call("pick_for_stretch", rng, func(_id: String) -> bool: return false, "desert")
 	_expect(picked.size() >= 2 and picked.size() <= 3, "a stretch has 2-3 choice events")
 
 

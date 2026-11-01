@@ -17,6 +17,16 @@ const AWARDS: Array[Dictionary] = [
 		"unlock": {"kind": "route", "id": "oregon_to_florida"}},
 	{"id": "finish_oregon_to_florida", "name": "Coast to Coast", "how": "Finish Oregon to Florida.", "secret": false,
 		"unlock": {"kind": "route", "id": "florida_to_california"}},
+	{"id": "finish_new_york_to_washington", "name": "Beltway Survivor", "how": "Finish New York to Washington.", "secret": false,
+		"unlock": {"kind": "route", "id": "chicago_to_new_orleans"}},
+	{"id": "finish_chicago_to_new_orleans", "name": "Down the River", "how": "Finish Chicago to New Orleans.", "secret": false,
+		"unlock": {"kind": "route", "id": "texas_to_washington"}},
+	{"id": "finish_texas_to_washington", "name": "Big Sky", "how": "Finish Texas to Washington.", "secret": false,
+		"unlock": {"kind": "color", "id": "desert_tan"}},
+	{"id": "finish_florida_to_california", "name": "Sunbelt", "how": "Finish Florida to California.", "secret": false,
+		"unlock": {"kind": "route", "id": "seattle_to_boston"}},
+	{"id": "finish_seattle_to_boston", "name": "Northern Lights", "how": "Finish Seattle to Boston.", "secret": false,
+		"unlock": {"kind": "color", "id": "frost_blue"}},
 	{"id": "full_house", "name": "Full House", "how": "Finish a route with all four survivors standing.", "secret": false,
 		"unlock": {"kind": "role", "id": "cook"}},
 	{"id": "on_foot", "name": "Who Needs Wheels", "how": "Finish a route on foot.", "secret": false,
@@ -62,11 +72,13 @@ const COLORS: Array[Dictionary] = [
 	{"id": "primer_grey", "name": "Primer Grey", "color": Color("6a6a6a")},
 	{"id": "stash_gold", "name": "Stash Gold", "color": Color("d8a838")},
 	{"id": "ice_cream_pink", "name": "Ice Cream Pink", "color": Color("e890b0")},
+	{"id": "desert_tan", "name": "Desert Tan", "color": Color("b8945a")},
+	{"id": "frost_blue", "name": "Frost Blue", "color": Color("7aa8d0")},
 ]
 
 ## Unlocked from the very first trip.
 const FREE: Dictionary = {
-	"route": ["maine_to_florida"],
+	"route": ["new_york_to_washington", "maine_to_florida"],
 	"role": ["scout", "gunner", "medic", "mechanic"],
 	"perk": ["none"],
 	"color": ["classic_red"],

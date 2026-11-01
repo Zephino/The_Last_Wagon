@@ -11,7 +11,7 @@ const ITEMS: Array[Dictionary] = [
 	{"label": "Scrap (5 parts)", "supply": "scrap", "amount": 5, "price": 10},
 ]
 ## Later towns charge more. The apocalypse is bad for prices.
-const PRICE_RISE_PER_STOP := 0.08
+const PRICE_RISE := 0.8
 const GROUND_Y := 70.0
 
 var _bought: Dictionary = {}
@@ -35,9 +35,10 @@ func _build_world() -> void:
 	Backdrop.add_camera(self, Vector2.ZERO)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = Trip.stop_index + 11
-	Backdrop.add_skyline(self, -300, 300, GROUND_Y, Trip.apocalypse.sky_color().darkened(0.4), rng)
-	var ground := Trip.apocalypse.ground_color()
-	add_child(PixelArt.ground_block(ground.lightened(0.2), ground, Vector2(-300, GROUND_Y), Vector2(600, 40)))
+	var region := Regions.of_stop(Trip.current_stop())
+	Backdrop.add_scenery(self, region, -300, 300, GROUND_Y, Regions.scenery_color(region, Trip.apocalypse), rng)
+	add_child(PixelArt.ground_block(Regions.ground_top(region, Trip.apocalypse), Regions.ground(region, Trip.apocalypse),
+		Vector2(-300, GROUND_Y), Vector2(600, 40)))
 	add_child(PixelArt.tiled(PixelArt.brick_tile(Color("6a3a2a")), Vector2(-150, GROUND_Y - 64), Vector2(120, 64)))
 	add_child(PixelArt.standing(PixelArt.person(Color("d9a066"), Color("8a8a8a"), Color("6a2a5a"), Color("2a2a3a")), Vector2(-90, GROUND_Y)))
 	var x := 40.0
@@ -46,8 +47,12 @@ func _build_world() -> void:
 		x += 16.0
 
 
+## Prices climb the further along the route you are (up to +80% near the
+## end), and some regions are pricier than others.
 func _price(item: Dictionary) -> int:
-	return roundi(int(item["price"]) * (1.0 + PRICE_RISE_PER_STOP * Trip.stop_index))
+	var progress := float(Trip.stop_index) / maxf(1.0, Trip.total_stops())
+	var region_prices := float(Regions.info(Regions.of_stop(Trip.current_stop()))["prices"])
+	return roundi(int(item["price"]) * (1.0 + PRICE_RISE * progress) * region_prices)
 
 
 func _build_ui() -> void:

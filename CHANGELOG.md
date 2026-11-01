@@ -1,5 +1,23 @@
 # Changelog
 
+## Version 00.01.12
+Date: 11/01/2026
+Time: 2:16 AM
+
+### Changes
+- Nine routes in mixed lengths, all through real cities:
+  - New: New York to Washington (short starter, open from the start), Chicago to New Orleans (short), Texas to Washington (medium), Seattle to Boston (long, across the cold north).
+  - Longer: Maine to Florida (15 stops, was 11), Maine to California and Maine to Oregon (20, were 10), Oregon to Florida (18, was 10), Florida to California (15, was 9).
+- Five regions (Northeast cities, Midwest plains, Mountains and Northwest, Desert Southwest, South), worked out from each city's map position. Each has its own scenery on the road, in stores and in scavenging levels (skylines, farms, snowy peaks and pines, mesas and cacti, cypress swamps), land colors, and dangers (more enemies, fewer or more wrecks, faster fuel use, store prices).
+- 15 region-only road events (3 per region), such as a subway entrance, a tornado, a rockslide, a sandstorm and a gator on the road. About 60% of stretches include one.
+- New awards: finishing the new routes unlocks the next route in the chain, plus two new car colors (Desert Tan, Frost Blue).
+- Store prices now rise with progress along the route (up to +80%) instead of +8% per stop, so long routes stay affordable.
+- The title screen lists routes in two columns with their length. The map shows the region and stop number. The leaderboard's route buttons wrap onto more lines.
+- Smoke test checks every route (6-20 stops, believable distances, every city on the map), that each region is used, sample cities' regions, region events, and the new unlock chain.
+
+### Reason
+The owner asked to build out all the routes: make each feel different, make them longer (mixed lengths), and add more routes.
+
 ## Version 00.01.11
 Date: 11/01/2026
 Time: 1:54 AM

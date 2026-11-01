@@ -22,7 +22,7 @@ func _ready() -> void:
 func _build_menu() -> void:
 	var root := UiKit.make_layer(self)
 	var column := UiKit.vbox(6)
-	UiKit.pin(column, root, Vector2(0.5, 0), Vector2(-150, 24), Vector2(300, 0))
+	UiKit.pin(column, root, Vector2(0.5, 0), Vector2(-260, 16), Vector2(520, 0))
 	var title := UiKit.label("THE LAST WAGON", 34, UiKit.ACCENT)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(title)
@@ -30,8 +30,13 @@ func _build_menu() -> void:
 	tagline.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(tagline)
 	column.add_child(UiKit.label("Choose your route:", 12))
+	var routes := GridContainer.new()
+	routes.columns = 2
+	routes.add_theme_constant_override("h_separation", 6)
+	routes.add_theme_constant_override("v_separation", 4)
+	column.add_child(routes)
 	for route: Dictionary in Routes.all():
-		column.add_child(_route_button(route))
+		routes.add_child(_route_button(route))
 	var extras := UiKit.hbox(8)
 	extras.alignment = BoxContainer.ALIGNMENT_CENTER
 	extras.add_child(UiKit.button("Leaderboard", Trip.go.bind("leaderboard"), 12))
@@ -53,8 +58,9 @@ func _build_menu() -> void:
 ## A route button: open routes go to the Prepare screen; locked ones say how to unlock them.
 func _route_button(route: Dictionary) -> Button:
 	var unlocked := Progress.is_unlocked("route", str(route["id"]))
-	var text: String = route["name"]
-	var route_button := UiKit.button(text, _choose_route.bind(route))
+	var text := "%s (%s)" % [route["name"], Routes.length_name(route)]
+	var route_button := UiKit.button(text, _choose_route.bind(route), 11)
+	route_button.custom_minimum_size = Vector2(257, 0)
 	if not unlocked:
 		var award := Unlocks.award_for("route", str(route["id"]))
 		route_button.text = "%s  (locked)" % text

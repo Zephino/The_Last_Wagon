@@ -3,7 +3,7 @@ extends Node2D
 ## Ranking: reached the end first, then most stops, then fewest days, then
 ## most survivors standing.
 
-const SHOWN_ROWS := 15
+const SHOWN_ROWS := 12
 
 var _route_id := ""
 var _rows: VBoxContainer
@@ -39,9 +39,11 @@ func _ready() -> void:
 	_client.get_json(OnlineConfig.leaderboard_url())
 
 
-func _route_picker() -> HBoxContainer:
-	var row := UiKit.hbox(6)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
+func _route_picker() -> HFlowContainer:
+	var row := HFlowContainer.new()
+	row.alignment = FlowContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("h_separation", 4)
+	row.add_theme_constant_override("v_separation", 4)
 	for route: Dictionary in Routes.all():
 		var pick := UiKit.button(route["name"], _on_route.bind(str(route["id"])), 9)
 		pick.toggle_mode = true

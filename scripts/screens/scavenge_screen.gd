@@ -16,6 +16,7 @@ const BANNER_TIME := 3.0
 var player: ScavPlayer
 var enemies: Array[ScavEnemy] = []
 var _layout: LevelLayout
+var _region := Regions.MIDWEST
 var _rng := RandomNumberGenerator.new()
 var _crates: Array[Dictionary] = []
 var _bullets: Array[Dictionary] = []
@@ -38,7 +39,8 @@ func _ready() -> void:
 		Trip.go("map")
 		return
 	_rng.seed = Trip.rng.randi()
-	_layout = LevelLayout.generate(_rng, Trip.stop_index)
+	_region = Regions.of_stop(Trip.current_stop())
+	_layout = LevelLayout.generate(_rng, Trip.stop_index + int(Regions.info(_region)["level_bonus"]))
 	_build_world()
 	_spawn_crates()
 	_spawn_player()
@@ -73,11 +75,13 @@ func is_finished() -> bool:
 func _build_world() -> void:
 	var apocalypse := Trip.apocalypse
 	Backdrop.add_sky(self, apocalypse)
-	Backdrop.add_skyline(self, -300, _layout.width * 0.4 + 500, 40, apocalypse.sky_color().darkened(0.3), _rng, 0.6)
+	var scenery := Regions.scenery_color(_region, apocalypse)
+	Backdrop.add_scenery(self, _region, -300, _layout.width * 0.4 + 500, 40, scenery, _rng, 0.6)
 	var solid_body := StaticBody2D.new()
 	solid_body.collision_layer = 1
 	add_child(solid_body)
-	var ground := apocalypse.ground_color()
+	var ground := Regions.ground(_region, apocalypse)
+	var top := Regions.ground_top(_region, apocalypse)
 	for solid: Dictionary in _layout.solids:
 		var rect: Rect2 = solid["rect"]
 		var shape := CollisionShape2D.new()
@@ -86,12 +90,12 @@ func _build_world() -> void:
 		shape.shape = box
 		shape.position = rect.get_center()
 		solid_body.add_child(shape)
-		add_child(_solid_visual(str(solid["kind"]), ground, rect))
+		add_child(_solid_visual(str(solid["kind"]), ground, top, rect))
 	add_child(PixelArt.standing(PixelArt.exit_sign(), _layout.exit_spot))
 	_exit_rect = Rect2(_layout.exit_spot - Vector2(8, 24), Vector2(16, 24))
 
 
-func _solid_visual(kind: String, ground: Color, rect: Rect2) -> Node2D:
+func _solid_visual(kind: String, ground: Color, top: Color, rect: Rect2) -> Node2D:
 	match kind:
 		"secret":
 			var ledge := PixelArt.tiled(PixelArt.plank_tile(Color("7a5a3a")), rect.position, rect.size)
@@ -101,7 +105,7 @@ func _solid_visual(kind: String, ground: Color, rect: Rect2) -> Node2D:
 			return PixelArt.tiled(PixelArt.plank_tile(Color("7a5a3a")), rect.position, rect.size)
 		"building":
 			return PixelArt.tiled(PixelArt.brick_tile(Color("5a3a32")), rect.position, rect.size)
-	return PixelArt.ground_block(ground.lightened(0.25), ground, rect.position, rect.size)
+	return PixelArt.ground_block(top, ground, rect.position, rect.size)
 
 
 func _spawn_crates() -> void:

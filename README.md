@@ -37,8 +37,8 @@ newer version online and switches to it (`web/update.js`).
 
 ## How a trip works
 
-1. **Title:** choose a route. *Maine to Florida* is open; the other four
-   routes unlock with awards.
+1. **Title:** choose a route. *New York to Washington* (short) and *Maine to
+   Florida* (medium) are open; the other seven routes unlock with awards.
 2. **Prepare:** pick 4 survivors, a starting perk and a car color.
 3. **Store (the starting town):** spend your $600 on food, fuel, ammo, medkits
    and scrap. You can rename your survivors here. You start **without a car**
@@ -59,6 +59,37 @@ newer version online and switches to it (`web/update.js`).
 7. You win by reaching the last stop. You lose when everyone is down and no medkits are left.
 
 Each day on the road, every survivor eats 2 lbs of food. No food means everyone gets hurt.
+
+## Routes and regions
+
+Nine routes in three lengths (short ~6-10 stops, medium ~15, long ~18-20),
+all through real cities:
+
+| Route | Length | How to unlock |
+|---|---|---|
+| New York to Washington | short | open |
+| Maine to Florida | medium | open |
+| Chicago to New Orleans | short | finish New York to Washington |
+| Texas to Washington | medium | finish Chicago to New Orleans |
+| Maine to California | long | finish any route |
+| Maine to Oregon | long | finish Maine to California |
+| Oregon to Florida | long | finish Maine to Oregon |
+| Florida to California | medium | finish Oregon to Florida |
+| Seattle to Boston | long | finish Florida to California |
+
+Every stop belongs to one of five regions, worked out from where it is on the
+map (`scripts/trip/regions.gd`). Each region has its own scenery, land
+colors, road events and dangers:
+
+| Region | Scenery | On the road |
+|---|---|---|
+| Northeast cities | ruined skylines | more enemies; pricier stores |
+| Midwest plains | farms, silos, fences | fewer wrecks; cheaper stores |
+| Mountains and Northwest | snowy peaks, pines | more wrecks; a little more fuel |
+| Desert Southwest | mesas, cacti | fuel runs out faster; pricier stores |
+| South: swamps and coast | cypress trees, stilt shacks | storms, gators, crawfish |
+
+Store prices also climb the further along a route you are.
 
 ## Roguelike: awards and unlocks
 
@@ -142,7 +173,7 @@ The Worker has its own tests: `cd leaderboard-api && npm test`.
 |---|---|
 | `scenes/` | One small scene per screen (title, town, map, road, scavenge, end) |
 | `scripts/core/` | Autoloads (`Trip` run state, `Controls` input), pixel art, UI helpers, backdrop |
-| `scripts/trip/` | Survivors, apocalypses, routes, road events, flavor text |
+| `scripts/trip/` | Survivors, apocalypses, routes, regions, road events, flavor text |
 | `scripts/meta/` | Awards and unlocks (`unlocks.gd`), and the `Progress` autoload that saves them |
 | `scripts/screens/` | The code for each screen, plus the map painter |
 | `scripts/road/` | Enemies on the road |
