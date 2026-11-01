@@ -49,6 +49,8 @@ var end_recorded := false
 var weapons: Array[String] = []
 var weapon_index := 0
 var _supply_debt: Dictionary = {}
+## Tests only: the next scavenging level uses this layout instead of a random one.
+var test_layout: LevelLayout = null
 var _day_carry := 0.0
 
 

@@ -16,6 +16,8 @@ var player: ScavPlayer
 var enemies: Array[ScavEnemy] = []
 var shots: Shots
 var boss: ScavBoss
+var hazards: Hazards
+var movers: Array[Mover] = []
 var _layout: LevelLayout
 var _region := Regions.MIDWEST
 var _rng := RandomNumberGenerator.new()
@@ -46,7 +48,10 @@ func _ready() -> void:
 	_rng.seed = Trip.rng.randi()
 	_region = Regions.of_stop(Trip.current_stop())
 	_difficulty = Trip.stop_index + int(Regions.info(_region)["level_bonus"])
-	_layout = LevelLayout.generate(_rng, _difficulty, Trip.is_boss_stop())
+	_layout = LevelLayout.generate(_rng, _difficulty, Trip.is_boss_stop(), _region)
+	if Trip.test_layout != null:
+		_layout = Trip.test_layout
+		Trip.test_layout = null
 	shots = Shots.new()
 	shots.level = self
 	_build_world()
@@ -94,6 +99,10 @@ func _build_world() -> void:
 	Backdrop.add_sky(self, apocalypse)
 	var scenery := Regions.scenery_color(_region, apocalypse)
 	Backdrop.add_scenery(self, _region, -300, _layout.width * 0.4 + 500, 40, scenery, _rng, 0.6)
+	for room: Rect2 in _layout.rooms:
+		var inside := PixelArt.tiled(PixelArt.brick_tile(Color("2a1e1c")), room.position, room.size)
+		inside.modulate = Color(0.55, 0.55, 0.6)
+		add_child(inside)
 	var solid_body := StaticBody2D.new()
 	solid_body.collision_layer = 1
 	add_child(solid_body)
@@ -108,6 +117,7 @@ func _build_world() -> void:
 		shape.position = rect.get_center()
 		solid_body.add_child(shape)
 		add_child(_solid_visual(str(solid["kind"]), ground, top, rect))
+	_build_pieces()
 	_exit_sign = PixelArt.standing(PixelArt.exit_sign(), _layout.exit_spot)
 	_exit_sign.visible = not _layout.has_boss
 	add_child(_exit_sign)
@@ -124,7 +134,44 @@ func _solid_visual(kind: String, ground: Color, top: Color, rect: Rect2) -> Node
 			return PixelArt.tiled(PixelArt.plank_tile(Color("7a5a3a")), rect.position, rect.size)
 		"building":
 			return PixelArt.tiled(PixelArt.brick_tile(Color("5a3a32")), rect.position, rect.size)
+		"barn":
+			return PixelArt.tiled(PixelArt.plank_tile(Color("8a2e24")), rect.position, rect.size)
+		"hay":
+			return PixelArt.tiled(PixelArt.plank_tile(Color("c8a850")), rect.position, rect.size)
 	return PixelArt.ground_block(top, ground, rect.position, rect.size)
+
+
+## Ladders, rails, hazards and moving platforms.
+func _build_pieces() -> void:
+	for ladder: Rect2 in _layout.ladders:
+		var rails := Node2D.new()
+		add_child(rails)
+		var wood := PixelArt.solid(Color("8a6a3a"))
+		rails.add_child(PixelArt.tiled(wood, ladder.position, Vector2(2, ladder.size.y)))
+		rails.add_child(PixelArt.tiled(wood, ladder.position + Vector2(ladder.size.x - 2, 0), Vector2(2, ladder.size.y)))
+		var y := ladder.position.y + 2.0
+		while y < ladder.end.y:
+			rails.add_child(PixelArt.tiled(wood, Vector2(ladder.position.x, y), Vector2(ladder.size.x, 1)))
+			y += 5.0
+	for piece: Dictionary in _layout.decor:
+		var rect: Rect2 = piece["rect"]
+		add_child(PixelArt.tiled(PixelArt.solid(Color("8a8a90")), rect.position, rect.size))
+	hazards = Hazards.new()
+	add_child(hazards)
+	hazards.setup(self, _layout.hazards)
+	for data: Dictionary in _layout.movers:
+		var mover := Mover.new()
+		mover.setup(self, data)
+		add_child(mover)
+		movers.append(mover)
+
+
+## True when the box touches a ladder (the player can climb).
+func ladder_at(box: Rect2) -> bool:
+	for ladder: Rect2 in _layout.ladders:
+		if ladder.intersects(box):
+			return true
+	return false
 
 
 func _spawn_crates() -> void:

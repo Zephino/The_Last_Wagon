@@ -14,6 +14,14 @@ Time: 3:02 AM
   - 4 boss awards, unlocking the Sawed-Off and Hunting Rifle perks (start with a shotgun or rifle) and the Chrome and Hazmat Yellow car colors.
   - Smoke test checks weapons and their supplies, every enemy kind (shooters spit, jumpers leap), and every boss (appears at the right stop, attacks, can be hit, opens the exit, earns its award). It found and fixed two bugs: picking up a weapon changed the one in hand, and The Overseer hovered out of reach.
 
+- Better levels, round B:
+  - Hazards: fire, spikes, toxic puddles (slow you), live wires that spark on and off, quicksand and swamp water (slow you).
+  - Moving platforms: elevators beside tall buildings, sliders across wide pits, and platforms that shake and drop after you land on them (they come back).
+  - Ladders up tall buildings and cliffs: hold up or down to climb, and you hop onto the roof at the top.
+  - Indoor rooms with doors, loot and an enemy inside, and a roof you can climb onto.
+  - Region pieces: subway trenches with live rails (Northeast), hay bales and barns (Midwest), cliffs with ladders (Mountains), dunes with quicksand (Desert), swamp water and boardwalks (South).
+  - Smoke test now checks 120 random levels (every region, plus boss levels) can be crossed: every wide pit has jumpable stepping platforms or a mover, and every tall climb has a ladder. A physics test rides each piece for real: climbs a ladder onto a roof, rides an elevator and a slider, triggers a falling platform, walks through a room, and checks fire hurts and water slows. It found and fixed one bug: reaching the top of a ladder didn't let you step onto the roof.
+
 ### Reason
 The owner reported the bug, and approved the fix together with the "Better levels" rounds A and B.
 

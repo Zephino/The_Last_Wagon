@@ -44,6 +44,7 @@ func _run() -> void:
 	_check_weapons()
 	await _check_enemy_kinds()
 	await _check_bosses()
+	await _check_level_pieces()
 	_progress.use_test_file("")
 	DirAccess.remove_absolute(TEST_PROGRESS)
 	_finish()
@@ -86,23 +87,59 @@ func _check_new_trip() -> void:
 	_expect(seen_mix, "some apocalypses should be a mix")
 
 
-## Every generated level must be jumpable: gaps and steps within jump reach.
+## Every generated level must be crossable: pits are either jumpable (48 px
+## or less) or bridged by platforms/movers with jumpable steps, and climbs
+## over 32 px have a ladder. Checked for every region and for boss levels.
 func _check_level_layouts() -> void:
 	var rng := RandomNumberGenerator.new()
-	for seed_value: int in 60:
+	var regions: Array[String] = ["", "northeast", "midwest", "mountains", "desert", "south"]
+	for seed_value: int in 120:
 		rng.seed = seed_value
-		var layout := LevelLayout.generate(rng, seed_value % 10)
+		var region: String = regions[seed_value % regions.size()]
+		var layout := LevelLayout.generate(rng, seed_value % 10, seed_value % 7 == 0, region)
 		var grounds: Array[Rect2] = []
+		var steps: Array[Rect2] = []
 		for solid: Dictionary in layout.solids:
 			if solid["kind"] == "ground":
 				grounds.append(solid["rect"])
+			elif solid["kind"] in ["platform", "hay"]:
+				steps.append(solid["rect"])
+		for mover: Dictionary in layout.movers:
+			var rect: Rect2 = mover["rect"]
+			steps.append(rect.merge(Rect2(rect.position + Vector2(mover["travel"]), rect.size)))
 		grounds.sort_custom(func(a: Rect2, b: Rect2) -> bool: return a.position.x < b.position.x)
 		for index: int in range(1, grounds.size()):
-			var gap := grounds[index].position.x - grounds[index - 1].end.x
-			var rise := grounds[index - 1].position.y - grounds[index].position.y
-			_expect(gap <= 48.0, "level %d has a gap of %.0f px (too wide to jump)" % [seed_value, gap])
-			_expect(rise <= 16.0, "level %d has a step of %.0f px (too tall)" % [seed_value, rise])
+			var left := grounds[index - 1]
+			var right := grounds[index]
+			var gap := right.position.x - left.end.x
+			if gap > 48.0:
+				_expect(_bridged(left.end.x, right.position.x, steps), "level %d (%s) has an unbridged %.0f px pit" % [seed_value, region, gap])
+			var rise := left.position.y - right.position.y
+			if rise > 32.0:
+				var climbable := false
+				for ladder: Rect2 in layout.ladders:
+					if absf(ladder.end.x - right.position.x) < 16.0:
+						climbable = true
+				_expect(climbable, "level %d (%s) has a %.0f px climb with no ladder" % [seed_value, region, rise])
 		_expect(layout.exit_spot.x > 300.0, "level %d exit should be far from the start" % seed_value)
+		if seed_value % 7 == 0:
+			_expect(layout.has_boss and layout.arena.size.x > 300.0, "boss level %d has an arena" % seed_value)
+
+
+## True when a pit from `from_x` to `to_x` can be crossed in jumps of 48 px or
+## less using the given platforms (each step must be inside the pit's span).
+func _bridged(from_x: float, to_x: float, steps: Array[Rect2]) -> bool:
+	var reach := from_x
+	var moved := true
+	while moved:
+		moved = false
+		if to_x - reach <= 48.0:
+			return true
+		for step: Rect2 in steps:
+			if step.position.x - reach <= 48.0 and step.end.x > reach and step.position.x < to_x:
+				reach = step.end.x
+				moved = true
+	return to_x - reach <= 48.0
 
 
 func _check_map_painter() -> void:
@@ -633,6 +670,122 @@ func _check_bosses() -> void:
 		await process_frame
 		_expect(bool(level.call("exit_open")), "beating the boss opens the exit")
 		_expect(_progress.has_award(award_id), "beating the boss earns %s" % award_id)
+
+
+## Builds one level with every new piece and checks each really works with
+## the game's physics: ladder, elevator, slider, falling platform, indoor room
+## and hazards.
+func _check_level_pieces() -> void:
+	var layout := LevelLayout.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	layout._ground(-64.0, 224.0, 0)
+	var x := 160.0
+	x = layout._ladder_chunk(rng, x, 0, 0.0)
+	x = layout._elevator_chunk(rng, x, 0, 0.0)
+	x = layout._slider_chunk(rng, x, 0)
+	x = layout._falling_chunk(rng, x, 0)
+	x = layout._room_chunk(rng, x, 0, 0.0, "brick")
+	x = layout._hazard_chunk(rng, x, 0, "fire")
+	x = layout._swamp_chunk(rng, x, 0)
+	layout._ground(x, 224.0, 0)
+	layout.exit_spot = Vector2(x + 200.0, 0)
+	layout.width = x + 224.0
+	layout.enemy_spots.clear()
+	layout.crate_spots.clear()
+	_new_trip(90)
+	_trip.stop_index = 1
+	_trip.test_layout = layout
+	await _change_to("scavenge")
+	var level := current_scene
+	for enemy: Node in level.get("enemies"):
+		enemy.queue_free()
+	(level.get("enemies") as Array).clear()
+	var player: CharacterBody2D = level.get("player")
+	var movers: Array = level.get("movers")
+	# Ladder: climb up the tall building and step onto its roof.
+	var ladder: Rect2 = layout.ladders[0]
+	var roof_y := ladder.position.y + 14.0
+	await _place(player, Vector2(ladder.position.x + 4.0, 0.0))
+	Input.action_press("move_up")
+	var on_roof := false
+	for frame: int in 200:
+		await physics_frame
+		if player.position.y < roof_y + 2.0:
+			Input.action_press("move_right")
+		if player.is_on_floor() and player.position.x > ladder.end.x + 10.0:
+			on_roof = true
+			break
+	Input.action_release("move_up")
+	Input.action_release("move_right")
+	_expect(on_roof, "you can climb off the top of a ladder onto the roof")
+	_expect(player.is_on_floor() and absf(player.position.y - roof_y) < 2.0, "the ladder leads up onto the roof (at y %.0f, roof %.0f)" % [player.position.y, roof_y])
+	# Elevator: stand on it and ride it up.
+	var elevator: Node2D = _mover_of(movers, "elevator")
+	await _place(player, elevator.position + Vector2(16, -1))
+	var lowest := player.position.y
+	for frame: int in 160:
+		await physics_frame
+		lowest = minf(lowest, player.position.y)
+	_expect(lowest < -60.0, "the elevator carries you up (reached %.0f)" % lowest)
+	# Slider: ride it across the pit.
+	var slider: Node2D = _mover_of(movers, "slider")
+	await _place(player, slider.position + Vector2(16, -1))
+	var start_x := player.position.x
+	var furthest := 0.0
+	for frame: int in 200:
+		await physics_frame
+		furthest = maxf(furthest, absf(player.position.x - start_x))
+	_expect(furthest > 40.0 and player.position.y < 5.0, "the slider carries you across (moved %.0f)" % furthest)
+	# Falling platform: drops soon after you land on it.
+	var falling: Node2D = _mover_of(movers, "falling")
+	await _place(player, falling.position + Vector2(16, -1))
+	await _frames(60)
+	_expect(bool(falling.call("is_falling")), "a falling platform drops after you land on it")
+	# Indoor room: walk in one door and out the other.
+	var room: Rect2 = layout.rooms[0]
+	await _place(player, Vector2(room.position.x - 20.0, 0.0))
+	Input.action_press("move_right")
+	for frame: int in 200:
+		await physics_frame
+		if player.position.x > room.end.x + 8.0:
+			break
+	Input.action_release("move_right")
+	_expect(player.position.x > room.end.x + 8.0, "you can walk through a room's doors")
+	# Fire hurts; swamp water slows you down.
+	var fire: Rect2 = layout.hazards[0]["rect"]
+	var survivor: Survivor = _trip.active()
+	var health_before := survivor.health
+	await _place(player, Vector2(fire.get_center().x, 0.0))
+	player.set("_hurt_timer", 0.0)
+	await _frames(5)
+	_expect(_trip.active() != survivor or survivor.health < health_before, "fire hurts")
+	var water: Rect2 = layout.hazards[1]["rect"]
+	await _place(player, Vector2(water.position.x + 4.0, 0.0))
+	Input.action_press("move_right")
+	await _frames(20)
+	var slowed: float = player.velocity.x
+	Input.action_release("move_right")
+	_expect(slowed > 0.0 and slowed < _trip.active().move_speed() * 0.8, "water slows you down (%.0f)" % slowed)
+
+
+func _place(player: CharacterBody2D, at: Vector2) -> void:
+	player.position = at
+	player.velocity = Vector2.ZERO
+	player.set("_hurt_timer", 1000.0)
+	await _frames(3)
+
+
+func _frames(count: int) -> void:
+	for frame: int in count:
+		await physics_frame
+
+
+func _mover_of(movers: Array, kind: String) -> Node2D:
+	for mover: Node in movers:
+		if str(mover.get("kind")) == kind:
+			return mover as Node2D
+	return null
 
 
 func _finish() -> void:

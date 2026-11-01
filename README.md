@@ -117,6 +117,21 @@ apocalypse: The Big Rotten (zombies), the Glowmother (fallout), The Overseer
 Each boss gives a big haul, a weapon, and an award (the zombie and fallout
 bosses unlock the Sawed-Off and Hunting Rifle perks).
 
+## Level pieces
+
+Scavenging levels are built from random pieces:
+- **Hazards:** fire, spikes, toxic puddles (slow you), live wires (spark on and
+  off), quicksand and swamp water (slow you down).
+- **Moving platforms:** elevators up tall buildings, platforms that slide
+  across wide pits, and platforms that drop soon after you land on them.
+- **Ladders** up tall buildings and cliffs (hold up or down to climb; hold up
+  at the top to hop onto the roof).
+- **Indoor rooms** you walk into through doors, with loot inside and a roof
+  to climb onto.
+- **Region pieces:** subway trenches with live rails (Northeast), hay bales
+  and barns (Midwest), cliffs with ladders (Mountains), dunes with quicksand
+  (Desert), and swamp water with boardwalks (South).
+
 ## Roguelike: awards and unlocks
 
 Every trip is a fresh run (no saving in the middle of a trip). What you keep

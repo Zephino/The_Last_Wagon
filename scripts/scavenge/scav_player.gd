@@ -1,7 +1,8 @@
 class_name ScavPlayer
 extends CharacterBody2D
-## The survivor you control in a scavenging level: run, jump, shoot (or
-## swing when out of ammo) and switch to another party member.
+## The survivor you control in a scavenging level: run, jump, climb ladders,
+## use the held weapon, and switch weapons or party members. Hazards can slow
+## you down (water, toxic puddles, quicksand).
 
 const GRAVITY := 900.0
 const MAX_FALL_SPEED := 400.0
@@ -9,9 +10,13 @@ const SHORT_HOP_SPEED := 90.0
 const HURT_COOLDOWN := 0.8
 const FALL_DAMAGE := 20
 const SIZE := Vector2(8, 14)
+const CLIMB_SPEED := 70.0
+const CLIMB_SIDE_SPEED := 40.0
+const LADDER_TOP_HOP := 170.0
 
 var level: ScavengeScreen
 var facing := 1
+var climbing := false
 var _fire_timer := 0.0
 var _hurt_timer := 0.0
 var _last_safe := Vector2.ZERO
@@ -63,7 +68,10 @@ func _physics_process(delta: float) -> void:
 
 func _move(survivor: Survivor, delta: float) -> void:
 	var steer := Controls.horizontal()
-	velocity.x = steer * survivor.move_speed()
+	var slow := level.hazards.affect(box()) if level.hazards != null else 1.0
+	if _climb(steer):
+		return
+	velocity.x = steer * survivor.move_speed() * slow
 	if steer != 0.0:
 		facing = 1 if steer > 0.0 else -1
 		_sprite.flip_h = facing < 0
@@ -76,6 +84,28 @@ func _move(survivor: Survivor, delta: float) -> void:
 	move_and_slide()
 	if is_on_floor():
 		_last_safe = position
+
+
+## Climbing: up/down on a ladder grabs it; jump sideways or step off to let go.
+## Returns true while climbing (normal movement is skipped).
+func _climb(steer: float) -> bool:
+	var on_ladder := level.ladder_at(box())
+	var vertical := Input.get_axis("move_up", "move_down")
+	if on_ladder and not climbing and vertical != 0.0 and not (vertical > 0.0 and is_on_floor()):
+		climbing = true
+	if climbing and (not on_ladder or (Input.is_action_just_pressed("jump") and steer != 0.0)):
+		climbing = false
+		# Reaching the top while still climbing: hop up so you can step onto the roof.
+		if not on_ladder and vertical < 0.0:
+			velocity.y = -LADDER_TOP_HOP
+	if not climbing:
+		return false
+	if steer != 0.0:
+		facing = 1 if steer > 0.0 else -1
+		_sprite.flip_h = facing < 0
+	velocity = Vector2(steer * CLIMB_SIDE_SPEED, vertical * CLIMB_SPEED)
+	move_and_slide()
+	return true
 
 
 func _fire(survivor: Survivor) -> void:
