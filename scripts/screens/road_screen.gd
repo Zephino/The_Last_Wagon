@@ -69,6 +69,7 @@ var _region := Regions.MIDWEST
 var _choice_events: Array[Dictionary] = []
 var _choice_xs: Array[float] = []
 var _dialog: EventDialog
+var _touch: TouchControls
 
 
 func _ready() -> void:
@@ -95,6 +96,9 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	delta = minf(delta, 0.05)
+	if Input.is_action_just_pressed("back") and _mode != Mode.DONE and _dialog == null:
+		open_pause()
+		return
 	if _dialog != null:
 		_refresh_hud()
 		return
@@ -263,7 +267,7 @@ func _walk(delta: float) -> void:
 	_miles_walked += dx / _px_per_mile
 	_handle_on_foot_actions()
 	if _abandoned_car != null and _x >= _abandoned_car.position.x - 20.0:
-		_mode = Mode.HOTWIRE
+		_set_mode(Mode.HOTWIRE)
 		_banner("An abandoned car! Press E to hotwire it.")
 
 
@@ -498,6 +502,26 @@ func _count_down_to_exit(delta: float) -> void:
 func _set_mode(mode: Mode) -> void:
 	_mode = mode
 	_update_actor_texture()
+	_update_touch_buttons()
+
+
+## Touch buttons for what you can do right now.
+func _update_touch_buttons() -> void:
+	if _touch == null:
+		return
+	var ids: Array[String] = []
+	match _mode:
+		Mode.DRIVING:
+			ids = ["jump"]
+		Mode.WALKING:
+			ids = ["fire", "survivor"]
+		Mode.HOTWIRE:
+			ids = ["use", "fire", "survivor"]
+	_touch.set_buttons(ids)
+
+
+func open_pause() -> PauseMenu:
+	return PauseMenu.open(self)
 
 
 func _update_actor_texture() -> void:
@@ -514,6 +538,11 @@ func _banner(text: String) -> void:
 # --- HUD -----------------------------------------------------------------------
 
 func _build_hud() -> void:
+	_touch = TouchControls.new()
+	add_child(_touch)
+	# Just right of the top info panel (it's 400 wide, 8 from the left).
+	_touch.place_pause(Vector2(0, 0), Vector2(440, 10))
+	_touch.pause_pressed.connect(open_pause)
 	var root := UiKit.make_layer(self)
 	var top := UiKit.panel(Vector2(400, 0))
 	UiKit.pin(top, root, Vector2(0, 0), Vector2(8, 8))
@@ -557,6 +586,14 @@ func _refresh_hud() -> void:
 
 
 func _prompt_text() -> String:
+	if Mobile.controls_shown():
+		match _mode:
+			Mode.DRIVING:
+				return "DANGER! Steer with the stick: right speeds up, left brakes. JUMP over wrecks." if _danger else "Cruising. The car drives itself until there's trouble."
+			Mode.WALKING:
+				return "On foot. Push the stick right to hurry. SHOOT enemies in your way."
+			Mode.HOTWIRE:
+				return "Tap USE to hotwire the car."
 	match _mode:
 		Mode.DRIVING:
 			if _danger:

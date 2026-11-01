@@ -79,7 +79,7 @@ func _process(delta: float) -> void:
 	if exit_open() and player.box().intersects(_exit_rect):
 		_end("You slip out of %s with your loot." % Trip.current_stop()["city"])
 	elif Input.is_action_just_pressed("back"):
-		_end("You leave early. Discretion, valor, something like that.")
+		open_pause()
 	_refresh_hud()
 
 
@@ -388,7 +388,18 @@ func _loot_summary() -> String:
 
 # --- HUD -------------------------------------------------------------------
 
+func open_pause() -> PauseMenu:
+	return PauseMenu.open(self, "Leave level", _end.bind("You leave early. Discretion, valor, something like that."))
+
+
 func _build_hud() -> void:
+	var touch := TouchControls.new()
+	add_child(touch)
+	# Under the party list, top left.
+	touch.place_pause(Vector2(0, 0), Vector2(30, 104))
+	var ids: Array[String] = ["jump", "fire", "weapon", "survivor"]
+	touch.set_buttons(ids)
+	touch.pause_pressed.connect(open_pause)
 	var root := UiKit.make_layer(self)
 	var party_panel := UiKit.panel()
 	UiKit.pin(party_panel, root, Vector2(0, 0), Vector2(8, 8))
@@ -408,7 +419,9 @@ func _build_hud() -> void:
 	UiKit.pin(_boss_label, root, Vector2(0.5, 0), Vector2(-150, 40), Vector2(300, 0))
 	_boss_bar = UiKit.bar(1, 1, UiKit.DANGER, Vector2(300, 8))
 	UiKit.pin(_boss_bar, root, Vector2(0.5, 0), Vector2(-150, 56), Vector2(300, 8))
-	var hint := UiKit.label("A/D move  SPACE jump  F shoot  Q/E or 1-6 weapon  TAB survivor  ESC leave", 10, UiKit.DIM)
+	var hint_text := "Stick: move, up/down climbs ladders   II: pause / leave" if Mobile.controls_shown() \
+		else "A/D move  SPACE jump  F shoot  Q/E or 1-6 weapon  TAB survivor  ESC pause"
+	var hint := UiKit.label(hint_text, 10, UiKit.DIM)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	UiKit.pin(hint, root, Vector2(0.5, 1), Vector2(-260, -22), Vector2(520, 0))
 

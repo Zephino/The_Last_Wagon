@@ -1,5 +1,24 @@
 # Changelog
 
+## Version 00.01.15
+Date: 11/01/2026
+Time: 1:28 PM
+
+### Changes
+- Phones and tablets are now fully playable:
+  - Touch controls on the road and in levels: a floating joystick (touch and drag anywhere on the left half: move, speed up / brake when driving, climb ladders) and buttons on the right that show only when they do something (JUMP, SHOOT, WEAPON, SWAP, USE).
+  - Touch controls appear automatically on phones and tablets, and on computers once the screen is touched (they hide again when the keyboard or a controller is used). Settings and the pause menu have Touch controls: Auto / On / Off.
+  - Pause menu (II button, Esc or Start) on the road and in levels: Resume, Leave level, Touch controls, Fullscreen, and Quit to title (asks first). Esc in a level now pauses instead of leaving straight away.
+  - Typing on phones: tapping a text box opens the phone's keyboard (party names, leaderboard name, suggestions, sync code). What's typed is cleaned like normal typing.
+  - Bigger text and buttons on phones, and screens kept clear of notches and rounded corners.
+  - An upright phone shows "Turn your phone sideways" and the game waits; the installed app opens sideways.
+  - The web page no longer zooms, scrolls or selects text when you touch the game.
+  - The map's side panel and the Prepare screen scroll when they don't fit, perks are in two columns and car colors in rows.
+- Smoke test now drives the game with simulated finger touches (joystick walking, JUMP, SHOOT, WEAPON, the II pause button, Leave level, USE to hotwire, the right buttons per mode), checks phone typing, the turn-sideways message, and that touch controls hide and show with keyboard and touch. Screens were checked at a phone size (844x390).
+
+### Reason
+The owner asked to make everything work on phones.
+
 ## Version 00.01.14
 Date: 11/01/2026
 Time: 7:02 AM

@@ -40,11 +40,19 @@ func _build() -> void:
 	var title := UiKit.label("Prepare: %s  (%d stops, %s)" % [Trip.route.get("name", ""), stops.size(), Routes.length_name(Trip.route)], 18, UiKit.ACCENT)
 	UiKit.pin(title, _root, Vector2(0.5, 0), Vector2(-300, 8), Vector2(600, 0))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# The choices scroll if they don't fit (small phone screens).
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	UiKit.pin(scroll, _root, Vector2(0.5, 0), Vector2(-310, 36), Vector2(620, maxf(150.0, _root.size.y - 84.0)))
+	var columns := UiKit.hbox(15)
+	scroll.add_child(columns)
 	var left := UiKit.vbox(3)
-	UiKit.pin(left, _root, Vector2(0.5, 0), Vector2(-305, 40), Vector2(300, 0))
+	left.custom_minimum_size = Vector2(295, 0)
+	columns.add_child(left)
 	_build_survivors(left)
 	var right := UiKit.vbox(3)
-	UiKit.pin(right, _root, Vector2(0.5, 0), Vector2(10, 40), Vector2(295, 0))
+	right.custom_minimum_size = Vector2(295, 0)
+	columns.add_child(right)
 	_build_perks(right)
 	_build_colors(right)
 	var buttons := UiKit.hbox(10)
@@ -72,6 +80,11 @@ func _build_survivors(column: VBoxContainer) -> void:
 
 func _build_perks(column: VBoxContainer) -> void:
 	column.add_child(UiKit.label("Starting perk", 12, UiKit.ACCENT))
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 4)
+	grid.add_theme_constant_override("v_separation", 3)
+	column.add_child(grid)
 	for perk: Dictionary in Unlocks.PERKS:
 		var perk_id: String = perk["id"]
 		var unlocked := Progress.is_unlocked("perk", perk_id)
@@ -82,13 +95,17 @@ func _build_perks(column: VBoxContainer) -> void:
 		pick.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		pick.disabled = not unlocked
 		pick.tooltip_text = str(perk["text"]) if unlocked else _locked_text("perk", perk_id)
-		column.add_child(pick)
+		pick.custom_minimum_size.x = 145
+		grid.add_child(pick)
 	column.add_child(UiKit.wrapped(str(Unlocks.perk(_perk)["text"]), 9, UiKit.DIM, 290))
 
 
 func _build_colors(column: VBoxContainer) -> void:
 	column.add_child(UiKit.label("Car color", 12, UiKit.ACCENT))
-	var row := UiKit.hbox(4)
+	var row := GridContainer.new()
+	row.columns = 6
+	row.add_theme_constant_override("h_separation", 4)
+	row.add_theme_constant_override("v_separation", 4)
 	for entry: Dictionary in Unlocks.COLORS:
 		var color_id: String = entry["id"]
 		var unlocked := Progress.is_unlocked("color", color_id)

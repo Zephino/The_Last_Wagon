@@ -46,6 +46,7 @@ func _refresh() -> void:
 func _build_app(column: VBoxContainer) -> void:
 	column.add_child(UiKit.label("Game", 13, UiKit.ACCENT))
 	column.add_child(UiKit.button("Fullscreen: %s" % ("On" if AppActions.is_fullscreen() else "Off"), _on_fullscreen, 12))
+	column.add_child(UiKit.button("Touch controls: %s" % Mobile.MODE_NAMES[Mobile.mode()], _on_touch_mode, 12))
 	var installed := AppActions.install_state() == "installed"
 	var install := UiKit.button("Installed" if installed else "Install app", _on_install, 12)
 	install.disabled = installed
@@ -94,6 +95,7 @@ func _build_not_linked(column: VBoxContainer) -> void:
 	_code_edit.max_length = 16
 	_code_edit.custom_minimum_size = Vector2(170, 0)
 	_code_edit.add_theme_font_size_override("font_size", 11)
+	WebTextInput.attach(_code_edit, "Type your sync code")
 	row.add_child(_code_edit)
 	row.add_child(UiKit.button("Use code", _on_use_code, 11))
 	column.add_child(row)
@@ -146,6 +148,12 @@ func _on_update() -> void:
 	_message = "Updating..."
 	_refresh()
 	AppActions.update_now()
+
+
+## Auto shows them on phones and tablets, and on computers once the screen is touched.
+func _on_touch_mode() -> void:
+	Mobile.set_mode(Mobile.next_mode())
+	_refresh()
 
 
 func _on_create() -> void:

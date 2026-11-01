@@ -58,6 +58,7 @@ func _add_submit_row(column: VBoxContainer) -> void:
 	_name_edit.text = str(PlayerPrefs.get_value("leaderboard_name", ""))
 	_name_edit.custom_minimum_size = Vector2(200, 0)
 	_name_edit.add_theme_font_size_override("font_size", 12)
+	WebTextInput.attach(_name_edit, "Your name for the leaderboard")
 	row.add_child(_name_edit)
 	_submit = UiKit.button("Submit", _on_submit, 12)
 	row.add_child(_submit)

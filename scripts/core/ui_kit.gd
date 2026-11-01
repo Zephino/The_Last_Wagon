@@ -18,13 +18,36 @@ static func make_layer(host: Node) -> Control:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(root)
+	_keep_clear_of_notches(root)
+	var viewport := root.get_viewport()
+	var update := func() -> void: _keep_clear_of_notches(root)
+	viewport.size_changed.connect(update)
+	root.tree_exiting.connect(func() -> void: viewport.size_changed.disconnect(update))
 	return root
+
+
+## On phones, shrinks a full-screen layer to the part clear of notches and
+## rounded corners (nothing changes on PC).
+static func _keep_clear_of_notches(root: Control) -> void:
+	if not is_instance_valid(root) or not root.is_inside_tree():
+		return
+	var view := root.get_viewport().get_visible_rect()
+	var safe := Mobile.safe_rect(root.get_viewport())
+	root.offset_left = safe.position.x - view.position.x
+	root.offset_top = safe.position.y - view.position.y
+	root.offset_right = safe.end.x - view.end.x
+	root.offset_bottom = safe.end.y - view.end.y
+
+
+## Text sizes for phones: small text gets a little bigger to stay readable.
+static func readable(size: int) -> int:
+	return maxi(size, 10) if Mobile.is_handheld() else size
 
 
 static func label(text: String, size := 12, color := TEXT) -> Label:
 	var result := Label.new()
 	result.text = text
-	result.add_theme_font_size_override("font_size", size)
+	result.add_theme_font_size_override("font_size", readable(size))
 	result.add_theme_color_override("font_color", color)
 	result.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
 	result.add_theme_constant_override("shadow_offset_x", 1)
@@ -42,7 +65,9 @@ static func wrapped(text: String, size := 11, color := TEXT, width := 200.0) -> 
 static func button(text: String, on_press: Callable, size := 12) -> Button:
 	var result := Button.new()
 	result.text = text
-	result.add_theme_font_size_override("font_size", size)
+	result.add_theme_font_size_override("font_size", maxi(readable(size), 12) if Mobile.is_handheld() else size)
+	if Mobile.is_handheld():
+		result.custom_minimum_size.y = 26
 	result.focus_mode = Control.FOCUS_NONE
 	result.pressed.connect(on_press)
 	return result

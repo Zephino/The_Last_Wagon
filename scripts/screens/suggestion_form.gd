@@ -65,6 +65,7 @@ func _build_fields(column: VBoxContainer) -> void:
 	_title_edit.max_length = MAX_TITLE
 	_title_edit.placeholder_text = "Add a motorcycle"
 	_title_edit.add_theme_font_size_override("font_size", 11)
+	WebTextInput.attach(_title_edit, "Short title for your idea")
 	column.add_child(_title_edit)
 	column.add_child(UiKit.label("Your idea (%d-%d letters)" % [MIN_DESCRIPTION, MAX_DESCRIPTION], 11))
 	_description = TextEdit.new()
@@ -72,6 +73,7 @@ func _build_fields(column: VBoxContainer) -> void:
 	_description.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
 	_description.placeholder_text = "What would you like, and why would it make the game better?"
 	_description.add_theme_font_size_override("font_size", 11)
+	WebTextInput.attach(_description, "Describe your idea")
 	column.add_child(_description)
 
 

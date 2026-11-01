@@ -6,8 +6,8 @@ find a car), and stop in ruined cities to scavenge supplies in side-scrolling
 shoot-and-loot levels. Every run rolls a random apocalypse: zombies, fallout,
 aliens, a plague, or a mix of two.
 
-Made with **Godot 4.7** (GL Compatibility renderer), so it runs on PC and in
-web browsers. Phones come later.
+Made with **Godot 4.7** (GL Compatibility renderer), so it runs on PC, in
+web browsers, and on phones and tablets (in the browser, or installed as an app).
 
 ## Play it in your browser
 
@@ -173,6 +173,25 @@ Both run on a small Cloudflare Worker in `leaderboard-api/` (setup steps in
 `leaderboard-api/README.md`). The game never holds a GitHub key. Its address
 is in `scripts/net/online_config.gd`.
 
+## Playing on a phone or tablet
+
+Open https://zephino.github.io/The_Last_Wagon/ in the phone's browser and hold
+it sideways (an upright phone shows "Turn your phone sideways" and the game
+waits). Settings -> **Install app** adds it to your home screen.
+
+- **Move:** touch anywhere on the left half of the screen and drag: a
+  joystick appears under your thumb. Left/right walk (or speed up / brake
+  when driving); up/down climb ladders.
+- **Buttons on the right** show only when they do something: **JUMP**,
+  **SHOOT** (hold), **WEAPON** (switch), **SWAP** (survivor) and **USE**
+  (hotwire a car).
+- **II** pauses (Resume, Leave level, Touch controls, Fullscreen, Quit to title).
+- Tapping a text box opens the phone's keyboard.
+
+Touch controls appear automatically on phones and tablets, and on a computer
+as soon as you touch its screen (they hide again when you use the keyboard).
+Settings -> **Touch controls: Auto / On / Off** changes that.
+
 ## Controls
 
 | Action | Keyboard | Gamepad |
@@ -183,7 +202,7 @@ is in `scripts/net/online_config.gd`.
 | Switch weapon | Q / E, or 1-6 | LB / RB |
 | Switch survivor | Tab | Y |
 | Hotwire a car | E | B |
-| Leave a scavenging level | Esc | Start |
+| Pause (and leave a level from the pause menu) | Esc | Start |
 
 ## The party
 
@@ -214,7 +233,7 @@ The Worker has its own tests: `cd leaderboard-api && npm test`.
 | Folder | What's inside |
 |---|---|
 | `scenes/` | One small scene per screen (title, town, map, road, scavenge, end) |
-| `scripts/core/` | Autoloads (`Trip` run state, `Controls` input), pixel art, UI helpers, backdrop |
+| `scripts/core/` | Autoloads (`Trip` run state, `Controls` input, `Mobile` phone support), touch controls, pause menu, phone typing, input safety, pixel art, UI helpers, backdrop |
 | `scripts/trip/` | Survivors, apocalypses, routes, regions, road events, flavor text |
 | `scripts/meta/` | Awards and unlocks (`unlocks.gd`), and the `Progress` autoload that saves them |
 | `scripts/screens/` | The code for each screen, plus the map painter |

@@ -62,10 +62,16 @@ func _build_map(root: Control) -> void:
 
 
 func _build_status(root: Control) -> void:
-	var status := UiKit.panel(Vector2(230, 0))
-	UiKit.pin(status, root, Vector2(1, 0), Vector2(-240, 10))
+	var status := UiKit.panel(Vector2(238, 0))
+	UiKit.pin(status, root, Vector2(1, 0), Vector2(-248, 10))
+	# Scrolls when it doesn't fit (small phone screens, bigger touch buttons).
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size = Vector2(222, maxf(120.0, root.size.y - 36.0))
+	status.add_child(scroll)
 	var column := UiKit.vbox(3)
-	status.add_child(column)
+	column.custom_minimum_size = Vector2(214, 0)
+	scroll.add_child(column)
 	var stop := Trip.current_stop()
 	column.add_child(UiKit.label(Trip.stop_label(stop), 15, UiKit.ACCENT))
 	column.add_child(UiKit.label("%s - stop %d of %d" % [Regions.display_name(Regions.of_stop(stop)), Trip.stop_index, Trip.total_stops()], 9, UiKit.DIM))

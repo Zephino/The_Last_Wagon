@@ -46,6 +46,7 @@ func _run() -> void:
 	await _check_bosses()
 	await _check_level_pieces()
 	await _check_input_safety()
+	await _check_phone()
 	_progress.use_test_file("")
 	DirAccess.remove_absolute(TEST_PROGRESS)
 	_finish()
@@ -831,6 +832,158 @@ func _check_input_safety() -> void:
 	var body := JSON.stringify({"login": "0123456789abcdef0123456789abcdef", "url": "https://evil.example/phish"}).to_utf8_buffer()
 	google.call("_on_reply", HTTPRequest.RESULT_SUCCESS, 200, PackedStringArray(), body)
 	_expect(str(google.get("state")) == "idle" and str(google.get("page_url")) == "", "a sign-in page on another site is never opened")
+
+
+## Phones: simulated finger touches drive the joystick and every button,
+## the pause menu works, typing works, and an upright phone is asked to turn.
+func _check_phone() -> void:
+	var mobile: Node = root.get_node("Mobile")
+	var old_mode: Variant = PlayerPrefs.get_value("touch_controls", "auto")
+	mobile.set("force_handheld", true)
+	mobile.call("set_mode", "auto")
+	_expect(bool(mobile.call("controls_shown")), "touch controls show on phones")
+	# A level: walk right with the stick, jump with JUMP, shoot with SHOOT.
+	_new_trip(110)
+	_trip.stop_index = 1
+	_trip.ammo = 20
+	await _change_to("scavenge")
+	var level := current_scene
+	for enemy: Node in level.get("enemies"):
+		enemy.queue_free()
+	(level.get("enemies") as Array).clear()
+	var player: CharacterBody2D = level.get("player")
+	player.set("_hurt_timer", 1000.0)
+	var touch: Node = _child_of_type(level, "TouchControls")
+	_expect(touch != null, "levels have touch controls")
+	if touch == null:
+		return
+	var view := root.get_visible_rect()
+	var stick_at := Vector2(view.size.x * 0.2, view.size.y * 0.7)
+	var start_x := player.position.x
+	_touch(0, stick_at, true)
+	_drag(0, stick_at + Vector2(30, 0))
+	await _frames(30)
+	_expect(player.position.x > start_x + 15.0, "pushing the stick right walks right")
+	_touch(0, stick_at + Vector2(30, 0), false)
+	await _frames(2)
+	_expect(not Input.is_action_pressed("move_right"), "lifting the finger stops walking")
+	var jump_button: Control = (touch.get("_buttons") as Dictionary)["jump"]
+	await _frames(10)
+	var floor_y := player.position.y
+	_touch(1, jump_button.position + jump_button.size / 2.0, true)
+	await _frames(8)
+	_expect(player.position.y < floor_y - 10.0, "JUMP jumps")
+	_touch(1, jump_button.position + jump_button.size / 2.0, false)
+	var fire_button: Control = (touch.get("_buttons") as Dictionary)["fire"]
+	var ammo_before: int = _trip.ammo
+	_touch(2, fire_button.position + fire_button.size / 2.0, true)
+	await _frames(20)
+	_touch(2, fire_button.position + fire_button.size / 2.0, false)
+	_expect(_trip.ammo < ammo_before, "SHOOT fires")
+	var weapon_button: Control = (touch.get("_buttons") as Dictionary)["weapon"]
+	var held: String = _trip.current_weapon()
+	_touch(3, weapon_button.position + weapon_button.size / 2.0, true)
+	await _frames(3)
+	_touch(3, weapon_button.position + weapon_button.size / 2.0, false)
+	_expect(_trip.current_weapon() != held, "WEAPON switches weapons")
+	# Pause with the II button, then leave the level from the menu.
+	var pause_button: Control = touch.get("_pause")
+	_touch(4, pause_button.position + pause_button.size / 2.0, true)
+	await process_frame
+	_touch(4, pause_button.position + pause_button.size / 2.0, false)
+	_expect(paused, "the II button pauses the game")
+	var menu: Node = _child_of_type(level, "PauseMenu")
+	_expect(menu != null, "the pause menu opens")
+	if menu != null:
+		var x_before := player.position.x
+		await _frames(20)
+		_expect(is_equal_approx(player.position.x, x_before), "nothing moves while paused")
+		menu.call("_leave")
+		_expect(not paused, "leaving unpauses")
+		_expect(await _wait_for_scene("Map"), "Leave level from the pause menu goes back to the map")
+	# The road: hotwiring with USE.
+	_new_trip(111)
+	await _change_to("road")
+	var road := current_scene
+	var road_touch: Node = _child_of_type(road, "TouchControls")
+	var car: Sprite2D = road.get("_abandoned_car")
+	if car != null:
+		road.set("_x", car.position.x - 21.0)
+		(road.get("_choice_xs") as Array).clear()
+		for walker: Node in road.get("_walkers"):
+			walker.queue_free()
+		(road.get("_walkers") as Array).clear()
+		await _frames(5)
+		var use_button: Control = (road_touch.get("_buttons") as Dictionary)["use"]
+		_expect(use_button.visible, "the USE button shows next to a car")
+		_touch(5, use_button.position + use_button.size / 2.0, true)
+		await process_frame
+		_touch(5, use_button.position + use_button.size / 2.0, false)
+		await _frames(120)
+		_expect(_trip.has_vehicle, "USE hotwires the car")
+		_expect(((road_touch.get("_buttons") as Dictionary)["jump"] as Control).visible, "JUMP shows once you're driving")
+	# Typing on a phone: answers go through the same cleaning as typed text.
+	_new_trip(112)
+	await _change_to("town")
+	var edits := current_scene.find_children("*", "LineEdit", true, false)
+	if not edits.is_empty():
+		var web_input: GDScript = load("res://scripts/core/web_text_input.gd")
+		web_input.call("apply_answer", edits[0], "<b>Typed</b> on a phone")
+		_expect(_trip.party[0].name == "bTyped/b o", "phone typing is cleaned and cut like normal typing (%s)" % _trip.party[0].name)
+	# Held upright: the game asks to turn sideways and waits.
+	mobile.set("force_window_size", Vector2i(390, 844))
+	await _frames(3)
+	_expect(bool(mobile.call("overlay_visible")) and paused, "an upright phone is asked to turn sideways, and the game waits")
+	mobile.set("force_window_size", Vector2i(844, 390))
+	await _frames(3)
+	_expect(not bool(mobile.call("overlay_visible")) and not paused, "turning it sideways carries on")
+	mobile.set("force_window_size", Vector2i.ZERO)
+	# Touch controls can be switched off in Settings.
+	mobile.call("set_mode", "off")
+	_expect(not bool(mobile.call("controls_shown")), "Touch controls: Off hides them")
+	mobile.set("force_handheld", false)
+	mobile.call("set_mode", "auto")
+	var key := InputEventKey.new()
+	key.physical_keycode = KEY_D
+	key.pressed = true
+	Input.parse_input_event(key)
+	Input.flush_buffered_events()
+	key.pressed = false
+	Input.parse_input_event(key)
+	Input.flush_buffered_events()
+	_expect(not bool(mobile.call("controls_shown")), "on a computer they hide again once the keyboard is used")
+	_touch(6, Vector2(100, 100), true)
+	_touch(6, Vector2(100, 100), false)
+	_expect(bool(mobile.call("controls_shown")), "and show again when the screen is touched")
+	Input.parse_input_event(key)
+	Input.flush_buffered_events()
+	PlayerPrefs.set_value("touch_controls", old_mode)
+
+
+## Real touches arrive in window pixels; `at` is in game pixels, so convert.
+func _touch(finger: int, at: Vector2, down: bool) -> void:
+	var event := InputEventScreenTouch.new()
+	event.index = finger
+	event.position = root.get_final_transform() * at
+	event.pressed = down
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()
+
+
+func _drag(finger: int, at: Vector2) -> void:
+	var event := InputEventScreenDrag.new()
+	event.index = finger
+	event.position = root.get_final_transform() * at
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()
+
+
+func _child_of_type(parent: Node, type_name: String) -> Node:
+	for child: Node in parent.get_children():
+		var script: Script = child.get_script()
+		if script != null and script.get_global_name() == type_name:
+			return child
+	return null
 
 
 func _place(player: CharacterBody2D, at: Vector2) -> void:
