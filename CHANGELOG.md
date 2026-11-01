@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 00.01.08
+Date: 11/01/2026
+Time: 1:19 AM
+
+### Changes
+- Added a Quit button to the title screen, next to Leaderboard and Suggest an idea. On PC it closes the game. In a web browser, which can't close its own tab, it shows "To quit, just close this browser tab."
+- The smoke test checks the Quit button is there.
+
+### Reason
+The owner asked for a Quit button on the main menu, visible in the browser too.
+
 ## Version 00.01.07
 Date: 11/01/2026
 Time: 1:11 AM

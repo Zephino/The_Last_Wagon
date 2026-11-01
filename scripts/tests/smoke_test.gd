@@ -212,6 +212,9 @@ func _check_online_screens() -> void:
 	await _change_to("end")
 	_expect(current_scene != null and current_scene.name == "End", "end screen with Submit should load")
 	await _change_to("title")
+	var quit_buttons := current_scene.find_children("*", "Button", true, false).filter(
+		func(node: Node) -> bool: return (node as Button).text == "Quit")
+	_expect(quit_buttons.size() == 1, "the title screen should have a Quit button")
 	var form: Node = load("res://scripts/screens/suggestion_form.gd").new()
 	current_scene.add_child(form)
 	await process_frame
