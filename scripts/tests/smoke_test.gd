@@ -37,6 +37,7 @@ func _run() -> void:
 	_check_unlocks_and_awards()
 	_check_road_events()
 	await _check_choice_event_on_road()
+	await _check_event_waits_for_jump()
 	_check_stashes()
 	await _check_meta_screens()
 	await _check_cloud_sync()
@@ -395,6 +396,53 @@ func _check_choice_event_on_road() -> void:
 	dialog.call("close")
 	await process_frame
 	_expect(road.get("_dialog") == null, "Continue closes the event")
+
+
+## Regression: a choice event must never open in the middle of a jump over a
+## wreck (it used to, and the car then fell onto the wreck and crashed).
+func _check_event_waits_for_jump() -> void:
+	_new_trip(50)
+	_trip.has_vehicle = true
+	_trip.vehicle_health = 100
+	_trip.fuel = 40.0
+	await _change_to("road")
+	var road := current_scene
+	for walker: Node in road.get("_walkers"):
+		walker.queue_free()
+	(road.get("_walkers") as Array).clear()
+	(road.get("_wrecks") as Array).clear()
+	road.call("_add_wreck", 600.0)
+	var first_event: Dictionary = (load("res://scripts/trip/road_events.gd") as GDScript).get("EVENTS")[6]
+	(road.get("_choice_xs") as Array).clear()
+	(road.get("_choice_xs") as Array).append(600.0)
+	(road.get("_choice_events") as Array).clear()
+	(road.get("_choice_events") as Array).append(first_event)
+	road.set("_x", 470.0)
+	road.set("_speed", 150.0)
+	Input.action_press("move_right")
+	var jumped := false
+	var opened := false
+	for index: int in 240:
+		await process_frame
+		if not jumped and float(road.get("_x")) >= 553.0:
+			Input.action_press("jump")
+			jumped = true
+		if road.get("_dialog") != null:
+			opened = true
+			_expect(float(road.get("_y")) >= 0.0, "the event waits until the car has landed")
+			_expect(float(road.get("_x")) - 600.0 >= 80.0, "the event waits until the wreck is behind you")
+			_expect(float(road.get("_speed")) > 0.0, "an event doesn't stop the car dead")
+			break
+	Input.action_release("jump")
+	Input.action_release("move_right")
+	_expect(opened, "the event still happens after the jump")
+	_expect(_trip.vehicle_health == 100, "a clean jump over a wreck does no damage")
+	var dialog: Node = road.get("_dialog")
+	if dialog != null:
+		dialog.call("close")
+	for index: int in 30:
+		await process_frame
+	_expect(_trip.vehicle_health == 100, "continuing after the event doesn't crash the car")
 
 
 ## Hidden stashes: some levels have them, and every ledge is within jump reach.

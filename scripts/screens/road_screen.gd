@@ -426,17 +426,37 @@ func _plan_choice_events() -> void:
 		_choice_xs.append(spot + Trip.rng.randf_range(-40.0, 40.0))
 
 
-## Opens the next choice event once you reach it, when no danger is near.
+## How close (in front or behind) a wreck or enemy keeps an event waiting.
+const EVENT_CLEARANCE := 80.0
+
+
+## Opens the next choice event once you reach it, but only when it's safe:
+## on the ground, and nothing close in front or just behind (an event must
+## never interrupt a jump over a wreck).
 func _maybe_choice_event() -> void:
 	if _choice_xs.is_empty() or _danger or _x < _choice_xs[0] or _mode == Mode.DONE:
+		return
+	if not _safe_for_event():
 		return
 	_choice_xs.pop_front()
 	open_event(_choice_events.pop_front())
 
 
-## Shows a choice event and waits (also used by tests).
+func _safe_for_event() -> bool:
+	if _y < 0.0 or _vy != 0.0:
+		return false
+	for wreck: Dictionary in _wrecks:
+		if absf(float(wreck["x"]) - _x) < EVENT_CLEARANCE:
+			return false
+	for walker: RoadWalker in _walkers:
+		if walker.is_alive() and absf(walker.position.x - _x) < EVENT_CLEARANCE:
+			return false
+	return true
+
+
+## Shows a choice event and waits (also used by tests). The car keeps its
+## speed, so continuing afterwards picks up where you left off.
 func open_event(event: Dictionary) -> void:
-	_speed = 0.0
 	_dialog = EventDialog.new()
 	_dialog.event = event
 	_dialog.closed.connect(_on_event_closed)

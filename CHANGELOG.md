@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 00.01.13
+Date: 11/01/2026
+Time: 3:02 AM
+
+### Changes
+- Fixed: a road choice event could pop up in the middle of a jump over a flipped car. Continuing then dropped the car straight onto the wreck and hurt everyone. Events now wait until the car is on the ground with no wreck or enemy close by (in front or just behind), and the car keeps its speed after an event. The smoke test now checks this.
+
+### Reason
+The owner reported the bug, and approved the fix together with the "Better levels" rounds A and B.
+
 ## Version 00.01.12
 Date: 11/01/2026
 Time: 2:16 AM
