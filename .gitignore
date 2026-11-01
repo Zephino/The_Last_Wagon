@@ -1,0 +1,13 @@
+# Godot
+.godot/
+/android/
+export_credentials.cfg
+
+# Local builds
+/build/
+/exports/
+
+# OS / editor clutter
+.DS_Store
+Thumbs.db
+*.tmp

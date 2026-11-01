@@ -1,5 +1,27 @@
 # Changelog
 
+## Version 00.01.03
+Date: 11/01/2026
+Time: 12:38 AM
+
+### Changes
+- Started the game in Godot 4.7 (GL Compatibility), with the first playable core loop for one route (Maine to Florida):
+  - Title screen with route choice (the other four routes are listed as coming later).
+  - Store screen used by the starting town and store towns: buy food, fuel, ammo, medkits and scrap, and rename the party.
+  - Pixel-art USA map showing the route, with healing, reviving, car repair, choosing the leader, and travel.
+  - Side-view road: the car drives itself until danger is close, then you steer, brake and jump wrecks. On foot you walk, shoot, and can hotwire abandoned cars. Running out of fuel or wrecking the car puts you back on foot.
+  - Random side-scrolling scavenging levels with enemies, crates of supplies and an exit.
+  - End screen for winning (reaching Miami) or losing (everyone down, no medkits).
+- A random apocalypse each run (zombies, fallout, aliens, plague, or a mix of two) that sets the enemies and colors.
+- Four survivors with roles (Scout, Gunner, Medic, Mechanic). Switch between them, and revive downed ones with medkits.
+- Placeholder pixel art drawn from code (no image files yet).
+- Keyboard and gamepad controls.
+- A headless smoke test (`scripts/tests/smoke_test.gd`) that plays every screen.
+- README with setup, controls and project layout. `CLAUDE.md` now lists the checks to run before pushing.
+
+### Reason
+The owner approved building the first playable version of The Last Wagon (single player; co-op comes next) and chose Godot over Unity, because Godot can be tested in these sessions, reuses the existing co-op code, and makes smaller web builds.
+
 ## Version 00.01.02
 Date: 11/01/2026
 Time: 12:06 AM

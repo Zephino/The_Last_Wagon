@@ -16,14 +16,14 @@ This is an explicit instruction to Claude, not a guarantee of automatic rule dis
 ## Rules that are easy to miss
 
 These come from `.cursor/rules/` and still apply in full; the rule files are the source of truth.
-- `version.mdc`: every user message that modifies the project bumps the version by `00.00.01` once. The canonical version is root `VERSION`; also update it anywhere else it is stored, displayed, or referenced.
+- `version.mdc`: every user message that modifies the project bumps the version by `00.00.01` once. The canonical version is root `VERSION`; also update `config/version` in `project.godot` (the smoke test checks they match).
 - `changelog.mdc`: every modifying user message adds one entry at the top of `CHANGELOG.md` with the new version, date, 12-hour time with AM/PM (the owner's local time), changes, and reason. Never alter older entries unless the owner asks.
 
 ## Pushing (owner rule)
 
 Finished work always goes to `main`:
 1. Commit on whatever branch the session uses, then push that same commit to `main` (`git push origin HEAD:main`). Also push the session branch if the session asks for it.
-2. Before pushing, run the checks available for what changed. Don't push to `main` if any fail; tell the owner instead.
+2. Before pushing, run the checks available for what changed: Godot import with no script errors (`godot --headless --import --path .`) and the smoke test (`godot --headless --path . -s res://scripts/tests/smoke_test.gd`). Don't push to `main` if any fail; tell the owner instead.
 3. If `main` has moved, merge `origin/main` into your branch, recheck, then push. Never force-push `main` or rewrite its history.
 4. Don't open a pull request unless the owner asks for one.
 
