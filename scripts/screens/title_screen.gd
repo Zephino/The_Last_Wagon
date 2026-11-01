@@ -34,6 +34,11 @@ func _build_menu() -> void:
 		var route_button := UiKit.button(text, _start_trip.bind(route))
 		route_button.disabled = not playable
 		column.add_child(route_button)
+	var extras := UiKit.hbox(8)
+	extras.alignment = BoxContainer.ALIGNMENT_CENTER
+	extras.add_child(UiKit.button("Leaderboard", Trip.go.bind("leaderboard"), 12))
+	extras.add_child(UiKit.button("Suggest an idea", _open_suggestions, 12))
+	column.add_child(extras)
 	var version := UiKit.label("v" + str(ProjectSettings.get_setting("application/config/version", "")), 9, UiKit.DIM)
 	UiKit.pin(version, root, Vector2(1, 1), Vector2(-70, -18))
 	# Godot's MIT license asks for its copyright notice to ship with the game.
@@ -44,3 +49,7 @@ func _build_menu() -> void:
 func _start_trip(route: Dictionary) -> void:
 	Trip.new_trip(route, int(Time.get_unix_time_from_system()))
 	Trip.go("town")
+
+
+func _open_suggestions() -> void:
+	add_child(SuggestionForm.new())

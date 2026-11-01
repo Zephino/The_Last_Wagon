@@ -6,6 +6,12 @@ Time: 1:11 AM
 
 ### Changes
 - Added `leaderboard-api/`: a Cloudflare Worker (adapted from Mythriven's) for the shared leaderboard and player suggestions, with tests, a setup app and a setup guide. The leaderboard keeps the best 100 trips on the `data` branch; suggestions become GitHub Issues.
+- End screen: type a name (remembered for next time) and press Submit to send the trip to the leaderboard.
+- New Leaderboard screen (from the title and end screens) showing the top 15 trips per route.
+- New "Suggest an idea" form on the title screen.
+- The game talks to the Worker at `https://the-last-wagon.thebotcoder.workers.dev` (`scripts/net/online_config.gd`) and explains politely when it can't reach it.
+- The GitHub web build now also runs the Worker's tests. The smoke test checks the leaderboard entry, the new screens and the suggestion form.
+- README explains the leaderboard and suggestions. Windows setup scripts keep Windows line endings.
 
 ### Reason
 The owner asked for a leaderboard and in-game suggestions, like their other games.

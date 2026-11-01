@@ -26,6 +26,8 @@ func _run() -> void:
 	await _check_walk_and_hotwire()
 	await _check_scavenge_exit()
 	await _check_game_over()
+	_check_score_entry()
+	await _check_online_screens()
 	_finish()
 
 
@@ -181,6 +183,46 @@ func _check_game_over() -> void:
 	_trip.party[0].hurt(Survivor.MAX_HEALTH)
 	_expect(_trip.treat(_trip.party[0]), "a medkit should revive a downed survivor")
 	_expect(not _trip.party[0].is_downed(), "revived survivor should be standing")
+
+
+## The leaderboard entry must follow the Worker's rules (leaderboard-api/src/board.js).
+func _check_score_entry() -> void:
+	_new_trip(12)
+	var lost: Dictionary = _trip.score_entry("Tester")
+	_expect(lost["route"] == "maine_to_florida", "score entry should carry the route id")
+	_expect(lost["finished"] == false and lost["stops"] == 0, "a fresh trip has reached no stops")
+	_expect(lost["total_stops"] == 10, "Maine to Florida has 10 stops after the start")
+	_expect(str(lost["apocalypse"]).split("+").size() >= 1, "apocalypse id should be set")
+	_expect(lost["days"] >= 1, "days start at 1")
+	_trip.stop_index = _trip.total_stops()
+	_trip.miles_traveled = 1720
+	_trip.days = 12.0
+	_trip.won = true
+	var won: Dictionary = _trip.score_entry("Tester")
+	_expect(won["finished"] == true and won["stops"] == won["total_stops"], "a finished trip reached every stop")
+	_expect(won["miles"] <= won["days"] * 400, "miles per day must stay believable")
+	var end_script: GDScript = load("res://scripts/screens/end_screen.gd")
+	_expect(end_script.clean_name("  Big  Carl!!<x> ") == "Big Carlx", "names are cleaned like the Worker does")
+
+
+func _check_online_screens() -> void:
+	_new_trip(13)
+	await _change_to("leaderboard")
+	_expect(current_scene != null and current_scene.name == "Leaderboard", "leaderboard screen should load")
+	await _change_to("end")
+	_expect(current_scene != null and current_scene.name == "End", "end screen with Submit should load")
+	await _change_to("title")
+	var form: Node = load("res://scripts/screens/suggestion_form.gd").new()
+	current_scene.add_child(form)
+	await process_frame
+	_expect(form.call("build_payload").is_empty(), "an empty suggestion must not be sent")
+	form.get("_title_edit").text = "Add a motorcycle"
+	form.get("_description").text = "A fast motorcycle that uses less fuel would be fun."
+	var payload: Dictionary = form.call("build_payload")
+	_expect(payload.get("category") == "gameplay", "suggestion category defaults to gameplay")
+	_expect(payload.get("website") == "", "the spam trap stays empty")
+	_expect(payload.get("client") is Dictionary, "device info is attached")
+	form.queue_free()
 
 
 func _finish() -> void:

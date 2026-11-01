@@ -24,6 +24,14 @@ func is_mixed() -> bool:
 	return threats.size() > 1
 
 
+## Short id for the leaderboard, e.g. "zombies" or "fallout+aliens".
+func id() -> String:
+	var parts: Array[String] = []
+	for threat: Threat in threats:
+		parts.append(_short_name(threat).to_lower())
+	return "+".join(parts)
+
+
 func main_threat() -> Threat:
 	return threats[0]
 

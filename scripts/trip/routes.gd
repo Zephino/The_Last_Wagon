@@ -10,10 +10,10 @@ enum Kind { START, SCAVENGE, TOWN, FINISH }
 static func all() -> Array[Dictionary]:
 	return [
 		_maine_to_florida(),
-		{"name": "Maine to California", "playable": false, "stops": []},
-		{"name": "Maine to Oregon", "playable": false, "stops": []},
-		{"name": "Oregon to Florida", "playable": false, "stops": []},
-		{"name": "Florida to California", "playable": false, "stops": []},
+		{"id": "maine_to_california", "name": "Maine to California", "playable": false, "stops": []},
+		{"id": "maine_to_oregon", "name": "Maine to Oregon", "playable": false, "stops": []},
+		{"id": "oregon_to_florida", "name": "Oregon to Florida", "playable": false, "stops": []},
+		{"id": "florida_to_california", "name": "Florida to California", "playable": false, "stops": []},
 	]
 
 
@@ -24,12 +24,20 @@ static func first_playable() -> Dictionary:
 	return {}
 
 
+static func by_id(route_id: String) -> Dictionary:
+	for route: Dictionary in all():
+		if route["id"] == route_id:
+			return route
+	return {}
+
+
 static func _stop(city: String, state: String, kind: Kind, lon: float, lat: float, miles: int) -> Dictionary:
 	return {"city": city, "state": state, "kind": kind, "lon": lon, "lat": lat, "miles": miles}
 
 
 static func _maine_to_florida() -> Dictionary:
 	return {
+		"id": "maine_to_florida",
 		"name": "Maine to Florida",
 		"playable": true,
 		"stops": [

@@ -42,6 +42,19 @@ version stays up. GitHub's Settings → Pages → Source must be **GitHub Action
 
 Each day on the road, every survivor eats 2 lbs of food. No food means everyone gets hurt.
 
+## Leaderboard and suggestions
+
+- **Leaderboard:** when a trip ends, type a name and press **Submit** to send
+  it. The title screen's **Leaderboard** button shows the best trips. Ranking:
+  reached the end first, then most stops, then fewest days, then most
+  survivors standing.
+- **Suggest an idea:** on the title screen. Each suggestion becomes a GitHub
+  Issue on this repo, without needing a sign-in.
+
+Both run on a small Cloudflare Worker in `leaderboard-api/` (setup steps in
+`leaderboard-api/README.md`). The game never holds a GitHub key. Its address
+is in `scripts/net/online_config.gd`.
+
 ## Controls
 
 | Action | Keyboard | Gamepad |
@@ -73,6 +86,7 @@ godot --headless --path . -s res://scripts/tests/smoke_test.gd
 ```
 
 It prints `SMOKE TEST PASSED` and exits with code 0 when everything works.
+The Worker has its own tests: `cd leaderboard-api && npm test`.
 
 ## Project layout
 
@@ -84,7 +98,9 @@ It prints `SMOKE TEST PASSED` and exits with code 0 when everything works.
 | `scripts/screens/` | The code for each screen, plus the map painter |
 | `scripts/road/` | Enemies on the road |
 | `scripts/scavenge/` | Level generator, player and enemies for scavenging levels |
+| `scripts/net/` | Talking to the online services (leaderboard, suggestions) |
 | `scripts/tests/` | The smoke test |
+| `leaderboard-api/` | The Cloudflare Worker for the leaderboard and suggestions, with its own tests |
 
 All art is placeholder pixel art drawn from code, so there are no image files yet.
 

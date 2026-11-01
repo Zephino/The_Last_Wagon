@@ -9,6 +9,7 @@ const SCENES: Dictionary = {
 	"road": "res://scenes/road.tscn",
 	"scavenge": "res://scenes/scavenge.tscn",
 	"end": "res://scenes/end.tscn",
+	"leaderboard": "res://scenes/leaderboard.tscn",
 }
 const STARTING_MONEY := 600
 const FOOD_PER_PERSON_PER_DAY := 2
@@ -238,3 +239,24 @@ func arrive_at_next_stop() -> void:
 
 func is_at_finish() -> bool:
 	return int(current_stop()["kind"]) == Routes.Kind.FINISH
+
+
+## Stops on the route after the start (reaching all of them finishes the trip).
+func total_stops() -> int:
+	return stops().size() - 1
+
+
+## This trip as a leaderboard entry (see leaderboard-api/src/board.js).
+func score_entry(player_name: String) -> Dictionary:
+	return {
+		"name": player_name,
+		"route": str(route.get("id", "")),
+		"finished": won,
+		"stops": stop_index,
+		"total_stops": total_stops(),
+		"days": int(days) + 1,
+		"survivors": standing_count(),
+		"miles": miles_traveled,
+		"apocalypse": apocalypse.id(),
+		"version": str(ProjectSettings.get_setting("application/config/version", "")),
+	}
