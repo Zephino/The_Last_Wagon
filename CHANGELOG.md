@@ -1,5 +1,17 @@
 # Changelog
 
+## Version 00.01.16
+Date: 11/02/2026
+Time: 4:10 AM
+
+### Changes
+- `README.md` is now a player's guide: what the game is, how to start playing (browser, installing, phones), controls for keyboard, controller and touch, a step-by-step first trip (route, prepare, store, map, road, scavenging, bosses, winning and losing), survival tips, routes, awards and unlocks, online features, and settings and pausing. Numbers were checked against the game's code.
+- The developer material moved, unchanged, to a new `DEVELOPERS.md` (opening the project in Godot, the web build, automated checks, project layout, online services, security, phone support, coming next, versions).
+- `CLAUDE.md` now says where each kind of documentation lives.
+
+### Reason
+The owner asked to remake the README as instructions on how to play the game.
+
 ## Version 00.01.15
 Date: 11/01/2026
 Time: 1:28 PM

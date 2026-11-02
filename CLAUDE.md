@@ -27,6 +27,12 @@ Finished work always goes to `main`:
 3. If `main` has moved, merge `origin/main` into your branch, recheck, then push. Never force-push `main` or rewrite its history.
 4. Don't open a pull request unless the owner asks for one.
 
+## Where things are documented
+
+- `README.md` is the **player's guide** (how to play). Keep it about playing: update it when controls, rules, routes, awards or online features change.
+- `DEVELOPERS.md` has the developer notes: opening the project in Godot, the web build, automated checks, project layout, online services and phone support.
+- `SECURITY.md` lists every input and what checks it. `leaderboard-api/README.md` covers the Cloudflare Worker.
+
 ## Ground rules
 - Explain things simply; the owner is not a professional programmer.
 - Never claim visual or gameplay testing from headless checks.

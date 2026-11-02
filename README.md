@@ -1,74 +1,211 @@
 # The Last Wagon
 
-An apocalyptic road-trip survival game. Pick a route across the USA, stock
-up at the starting store, then travel stop to stop. Drive (or walk, until you
-find a car), and stop in ruined cities to scavenge supplies in side-scrolling
-shoot-and-loot levels. Every run rolls a random apocalypse: zombies, fallout,
-aliens, a plague, or a mix of two.
+*The world ended. The road didn't.*
 
-Made with **Godot 4.7** (GL Compatibility renderer), so it runs on PC, in
-web browsers, and on phones and tablets (in the browser, or installed as an app).
+The Last Wagon is a road-trip survival game across a ruined USA. Pick a
+route, gather four survivors, stock up at the last general store, and head
+out. You'll drive (or walk, until you find a car), make hard choices on the
+road, and stop in ruined cities to fight and scavenge for supplies. Every trip
+has a random apocalypse: zombies, fallout, aliens, a plague, or two at once.
 
-## Play it in your browser
+Every trip is a fresh start. What you keep between trips are **awards**,
+which unlock new routes, survivors, starting perks and car colors.
 
-**https://zephino.github.io/The_Last_Wagon/**
+---
 
-Every push to `main` rebuilds this automatically (see
-`.github/workflows/web.yml`): it runs the smoke test, builds the web version and
-publishes it, usually within a few minutes. If the smoke test fails, the old
-version stays up. GitHub's Settings → Pages → Source must be **GitHub Actions**.
+## Start playing
 
-### Install it like an app, and updates
+**Play in your browser:** **https://zephino.github.io/The_Last_Wagon/**
 
-On the title screen, **Settings** has:
-- **Fullscreen** on/off.
-- **Install app:** in Chrome or Edge, installs the game with its own icon and
-  window. On iPhone/iPad: Share, then Add to Home Screen.
-- **Update app:** clears the saved copy and reloads the newest version.
+It works on computers, phones and tablets.
 
-The game also updates itself: for 30 seconds after opening, it checks for a
-newer version online and switches to it (`web/update.js`).
+- **Install it like an app:** on the title screen, open **Settings** and press
+  **Install app**. On iPhone or iPad: tap **Share**, then **Add to Home Screen**.
+- **On a phone:** hold it **sideways**. If you hold it upright, the game
+  pauses and asks you to turn it.
+- **Updates:** the game updates itself when you open it. **Settings → Update
+  app** fetches the newest version straight away.
 
-## Play it on your computer
+---
 
-1. Install **Godot 4.7** (the standard version, not .NET) from https://godotengine.org/download
-2. Open Godot, click **Import**, and pick the `project.godot` file in this folder.
-3. Press **F5** (or the ▶ Play button at the top right).
+## Controls
 
-## How a trip works
+| What | Keyboard | Controller | Touch screen |
+|---|---|---|---|
+| Move / steer | A D or ← → | Left stick / D-pad | Drag on the left half of the screen (a joystick appears under your thumb) |
+| Climb a ladder | W S or ↑ ↓ | Left stick / D-pad | Drag the joystick up or down |
+| Jump | Space, W or ↑ | A | **JUMP** |
+| Shoot / swing | F, J or Ctrl (hold) | X | **SHOOT** (hold) |
+| Switch weapon | Q / E, or 1-6 | LB / RB | **WEAPON** |
+| Switch survivor | Tab | Y | **SWAP** |
+| Hotwire a car | E | B | **USE** |
+| Pause | Esc | Start | **II** |
 
-1. **Title:** choose a route. *New York to Washington* (short) and *Maine to
-   Florida* (medium) are open; the other seven routes unlock with awards.
-2. **Prepare:** pick 4 survivors, a starting perk and a car color.
-3. **Store (the starting town):** spend your $600 on food, fuel, ammo, medkits
-   and scrap. You can rename your survivors here. You start **without a car**
-   (unless you chose the Old Beater perk).
-4. **Map:** see where you are, heal or revive survivors with medkits, repair
-   the car with scrap, pick who leads, then scavenge, shop or travel.
-5. **Road:** drive or walk to the next stop. Two or three times per stretch a
-   **road event** stops you and asks what to do (help a stranger, trade with a
-   convoy, take a detour...). Some choices need a certain survivor.
-   - In a car it drives itself until danger is close, then you take the wheel.
-   - On foot you are slow, and you have to shoot enemies in your way. The first
-     leg always has an abandoned car you can hotwire.
-   - Running out of fuel, or wrecking the car, puts you back on foot.
-6. **Scavenge:** a side-scrolling level. Open crates for supplies and reach the
-   green EXIT sign. If a survivor goes down, the next one takes over.
-   About half the levels hide a **secret stash**: faint ledges climbing high
-   above the street to a golden crate.
-7. You win by reaching the last stop. You lose when everyone is down and no medkits are left.
+Touch buttons only show up when they do something. On a computer, they
+appear as soon as you touch the screen and hide when you use the keyboard
+(**Settings → Touch controls** changes that).
 
-Each day on the road, every survivor eats 2 lbs of food. No food means everyone gets hurt.
+Menus work with the mouse, or by tapping. On a phone, tapping a text box
+opens the keyboard.
 
-## Routes and regions
+---
 
-Nine routes in three lengths (short ~6-10 stops, medium ~15, long ~18-20),
-all through real cities:
+## Your first trip, step by step
+
+### 1. Pick a route
+
+The title screen lists every route, with its length (short, medium or long).
+Two are open from the start:
+- **New York to Washington**: short, a good first trip.
+- **Maine to Florida**: medium.
+
+The others unlock as you finish routes (see [Routes](#routes)).
+
+### 2. Prepare
+
+- **Survivors:** pick four. Each one is good at something:
+
+  | Survivor | Good at |
+  |---|---|
+  | **Scout** | Runs faster, jumps higher, finds extra loot in crates |
+  | **Gunner** | Double damage, shoots faster |
+  | **Medic** | Medkits heal and revive much more |
+  | **Mechanic** | Uses less fuel, better car repairs, hotwires cars fast |
+  | **Cook** *(unlock)* | The party eats 40% less food |
+  | **Thief** *(unlock)* | Finds extra money in crates and road events |
+
+- **Starting perk:** a small head start, like extra money or a medkit. You
+  only have "No perk" at first; more unlock with awards.
+- **Car color:** just for looks.
+
+### 3. Shop at the general store
+
+You start with **$600** and **no car**. Buy:
+
+| Item | Why you need it |
+|---|---|
+| **Food** (20 lbs) | Each survivor eats 2 lbs a day. If the food runs out, everyone gets hurt every day. |
+| **Fuel** (5 gallons) | A car uses about 1 gallon every 20 miles. Worth buying even without a car yet. |
+| **Ammo** (20 rounds) | For the pistol, shotgun and rifle. |
+| **Medkit** | Heals a hurt survivor, or gets a downed one back up. |
+| **Scrap** (5 parts) | Repairs your car, and feeds the nail gun. |
+
+You can rename your survivors here. Stores further along the route charge
+more, so stock up early.
+
+### 4. The map
+
+The map shows your route and where you are. From here you can:
+- **Heal** or **revive** survivors with medkits.
+- **Repair** the car with 5 scrap.
+- Choose who **leads** (the survivor you control).
+- **Scavenge** the city, **visit the store** (in store towns), or **drive / walk** to
+  the next stop.
+
+### 5. On the road
+
+- **On foot:** you walk slowly (about 30 miles a day, so food goes fast). Enemies
+  block your way, so shoot them. The first stretch of every trip always has
+  an **abandoned car**: walk up to it and **hotwire** it.
+- **In a car:** it drives itself (about 180 miles a day) until danger is close.
+  Then **you take the wheel**:
+  - Steer right to speed up, left to brake.
+  - **Jump** over flipped cars. Hitting one damages the car and shakes everyone.
+  - You can run enemies over, but it dents the car a little.
+- **Out of fuel or wrecked?** You're back on foot, so keep fuel and scrap handy.
+- **Road events:** two or three times a stretch, something happens and you
+  choose what to do: help a stranger, trade with a convoy, take a detour...
+  Choices can go well or badly. Some need a certain survivor ("Let the Medic
+  look at them") or a supply.
+
+### 6. Scavenging
+
+Scavenging stops are side-scrolling levels. **Open crates** (just walk into
+them) for supplies, then reach the green **EXIT** sign. Scavenging takes half a
+day.
+
+- **Weapons** sometimes turn up in crates (and in hidden stashes and from
+  bosses). Your party keeps them for the whole trip:
+
+  | Weapon | Uses | Good for |
+  |---|---|---|
+  | Crowbar | nothing | Close up; always works |
+  | Pistol | 1 ammo | All-round (you start with it) |
+  | Shotgun | 2 ammo | Spreads out, short range |
+  | Rifle | 1 ammo | Long range, goes through 3 enemies |
+  | Flamethrower | fuel | Burning crowds (but that fuel was for the car...) |
+  | Nail Gun | scrap (1 per 4 nails) | Very fast fire |
+
+  When a weapon runs dry, you switch to the crowbar automatically.
+
+- **Enemies** look different in every apocalypse, and tougher kinds appear as
+  your trip goes on: walkers, **Sprinters** (fast, in pairs), **Spitters**
+  (spit at you from a distance, so jump over it), **Leapers** (jump up onto
+  ledges after you) and **Brutes** (slow, very tough, hit hard).
+- **Watch out for:** fire, spikes, toxic puddles, live wires (they spark on
+  and off, so time it), quicksand and swamp water (both slow you down).
+  Falling into a pit hurts, and you're put back on solid ground.
+- **Getting around:** climb **ladders**, ride **elevators** and **sliding
+  platforms**, and be quick on **platforms that shake and drop**. Some
+  buildings have doors you can walk into, with loot inside.
+- **Hidden stashes:** about half the levels hide faint, see-through ledges
+  climbing high above the street. Climb them to a **golden crate** full of
+  loot.
+- **If a survivor goes down**, the next one takes over. If everyone goes
+  down, you retreat to the map.
+
+### 7. Bosses
+
+On medium and long routes, a **boss** guards the last scavenging stop before
+the finish. The exit stays shut until it's beaten. There's one per apocalypse:
+
+| Apocalypse | Boss | Watch for |
+|---|---|---|
+| Zombies | **The Big Rotten** | Ground slams that roll along the floor, and calls for help |
+| Fallout | **The Glowmother** | Arcs of glowing globs |
+| Aliens | **The Overseer** | Hovers and drops bombs; jump to hit it |
+| Plague | **Patient Zero** | Charges across the arena, coughing spit |
+
+Use the ledges to dodge. Beating a boss gives a big haul, a weapon and an award.
+
+### 8. Winning and losing
+
+- **You win** by reaching the last stop.
+- **You lose** when every survivor is down and you have no medkits left.
+
+At the end, type a name and press **Submit** to put your trip on the
+leaderboard (nothing is sent unless you press it).
+
+---
+
+## Survival tips
+
+- **Food goes fastest on foot:** a long walk can take weeks. Find a car early.
+- **Keep a medkit or two.** A downed survivor stays down until you use one,
+  and you lose when everyone is down with no medkits.
+- **Carry spare fuel and scrap.** An empty tank or a wrecked car leaves you
+  walking.
+- **Bring a Medic** for much better healing, and a **Mechanic** if you plan to
+  drive a lot.
+- **Fight from the ledges.** Most enemies can't follow you up (Leapers can).
+- **Regions matter:**
+
+  | Region | What to expect |
+  |---|---|
+  | Northeast cities | More enemies; pricier stores |
+  | Midwest plains | Open roads, fewer wrecks; cheaper stores |
+  | Mountains and Northwest | More wrecks on twisty roads; a little more fuel |
+  | Desert Southwest | Fuel runs out 30% faster; pricier stores |
+  | South (swamps and coast) | Storms, gators and swamp water |
+
+---
+
+## Routes
 
 | Route | Length | How to unlock |
 |---|---|---|
-| New York to Washington | short | open |
-| Maine to Florida | medium | open |
+| New York to Washington | short | open from the start |
+| Maine to Florida | medium | open from the start |
 | Chicago to New Orleans | short | finish New York to Washington |
 | Texas to Washington | medium | finish Chicago to New Orleans |
 | Maine to California | long | finish any route |
@@ -77,201 +214,48 @@ all through real cities:
 | Florida to California | medium | finish Oregon to Florida |
 | Seattle to Boston | long | finish Florida to California |
 
-Every stop belongs to one of five regions, worked out from where it is on the
-map (`scripts/trip/regions.gd`). Each region has its own scenery, land
-colors, road events and dangers:
+## Awards and unlocks
 
-| Region | Scenery | On the road |
-|---|---|---|
-| Northeast cities | ruined skylines | more enemies; pricier stores |
-| Midwest plains | farms, silos, fences | fewer wrecks; cheaper stores |
-| Mountains and Northwest | snowy peaks, pines | more wrecks; a little more fuel |
-| Desert Southwest | mesas, cacti | fuel runs out faster; pricier stores |
-| South: swamps and coast | cypress trees, stilt shacks | storms, gators, crawfish |
+The **Awards** page (title screen) shows all 26 awards, what each one
+unlocks, and your totals. Earn them by finishing routes, finishing with
+everyone alive, finishing fast or on foot, beating bosses, opening crates and
+more. Some are **secrets** (shown as ???): look for hidden stashes, and keep an
+eye out for very rare road events.
 
-Store prices also climb the further along a route you are.
-
-## Weapons, enemies and bosses
-
-**Weapons** are found in crates, hidden stashes and from bosses. The party
-shares them for the whole trip; they're lost when the trip ends.
-
-| Weapon | Uses | Notes |
-|---|---|---|
-| Crowbar | nothing | melee; you always have it |
-| Pistol | 1 ammo | you always start with it |
-| Shotgun | 2 ammo | 5 pellets, short range |
-| Rifle | 1 ammo | long range, goes through 3 enemies |
-| Flamethrower | fuel | short-range flames (fuel for the car vs. your gun!) |
-| Nail Gun | scrap (1 per 4 nails) | very fast |
-
-When a weapon runs dry you switch to the crowbar automatically.
-
-**Enemies** take their look from the apocalypse, and tougher kinds appear as
-the trip goes on: walkers, Sprinters (fast, in pairs), Spitters (keep their
-distance and spit), Leapers (jump onto platforms) and Brutes (slow and tough).
-
-**Bosses** guard the last scavenging stop of medium and long routes, one per
-apocalypse: The Big Rotten (zombies), the Glowmother (fallout), The Overseer
-(aliens) and Patient Zero (plague). The exit stays shut until it's beaten.
-Each boss gives a big haul, a weapon, and an award (the zombie and fallout
-bosses unlock the Sawed-Off and Hunting Rifle perks).
-
-## Level pieces
-
-Scavenging levels are built from random pieces:
-- **Hazards:** fire, spikes, toxic puddles (slow you), live wires (spark on and
-  off), quicksand and swamp water (slow you down).
-- **Moving platforms:** elevators up tall buildings, platforms that slide
-  across wide pits, and platforms that drop soon after you land on them.
-- **Ladders** up tall buildings and cliffs (hold up or down to climb; hold up
-  at the top to hop onto the roof).
-- **Indoor rooms** you walk into through doors, with loot inside and a roof
-  to climb onto.
-- **Region pieces:** subway trenches with live rails (Northeast), hay bales
-  and barns (Midwest), cliffs with ladders (Mountains), dunes with quicksand
-  (Desert), and swamp water with boardwalks (South).
-
-## Roguelike: awards and unlocks
-
-Every trip is a fresh run (no saving in the middle of a trip). What you keep
-between trips are **awards**, shown on the title screen's **Awards** page.
-Each award unlocks something for future trips:
-
-- **Routes:** finishing a route opens the next one.
-- **Survivors:** the Cook (party eats 40% less) and the Thief (extra money).
-- **Starting perks:** extra money, fuel, medkits, ammo, or a beat-up car.
+Awards unlock:
+- **Routes** (see above).
+- **Survivors:** the Cook and the Thief.
+- **Starting perks:** extra money, fuel, medkits or ammo, an old car, or a
+  shotgun or rifle.
 - **Car colors.**
 
-Some awards are secrets (hidden stashes and rare road events) and show as
-??? until found. The leaderboard shows which perk each trip used.
+---
 
-### Online progress
+## Online
 
-Progress is saved on your device, and can also follow you to other devices
-(Settings -> **Online progress**):
-- **Create sync code:** a private 12-letter code. On another device, type it
-  under "Already have a code" and press **Use code**.
-- **Sign in with Google:** every device signed in to the same Google account
-  shares progress (needs the owner's one-time Google setup, see
-  `leaderboard-api/README.md`).
+- **Leaderboard:** the best trips on each route (title screen → **Leaderboard**).
+  Trips that reach the end rank first, then by stops reached, fewest days, and
+  most survivors. The perk you used is shown too.
+- **Suggest an idea:** title screen. Your idea goes straight to the developer;
+  no account needed.
+- **Your progress on every device:** **Settings → Online progress**:
+  - **Create sync code**, then type that code on your other device (**Use code**), or
+  - **Sign in with Google** on each device.
 
-When two devices both have progress, they're combined: every award from both
-is kept, and each total keeps the higher number. It syncs when the game
-opens, after each award, at the end of each trip, and with **Sync now**.
+  Progress from both devices is combined, so nothing is lost.
 
-## Leaderboard and suggestions
+## Settings and pausing
 
-- **Leaderboard:** when a trip ends, type a name and press **Submit** to send
-  it. The title screen's **Leaderboard** button shows the best trips. Ranking:
-  reached the end first, then most stops, then fewest days, then most
-  survivors standing.
-- **Suggest an idea:** on the title screen. Each suggestion becomes a GitHub
-  Issue on this repo, without needing a sign-in.
+- **Settings** (title screen): Fullscreen, Touch controls (Auto / On / Off),
+  Install app, Update app, and Online progress.
+- **Pause** (Esc, Start or **II**) on the road and in levels: Resume, Leave
+  level, Touch controls, Fullscreen, and Quit to title. Trips aren't saved,
+  so quitting ends the trip.
 
-Both run on a small Cloudflare Worker in `leaderboard-api/` (setup steps in
-`leaderboard-api/README.md`). The game never holds a GitHub key. Its address
-is in `scripts/net/online_config.gd`.
+---
 
-## Playing on a phone or tablet
-
-Open https://zephino.github.io/The_Last_Wagon/ in the phone's browser and hold
-it sideways (an upright phone shows "Turn your phone sideways" and the game
-waits). Settings -> **Install app** adds it to your home screen.
-
-- **Move:** touch anywhere on the left half of the screen and drag: a
-  joystick appears under your thumb. Left/right walk (or speed up / brake
-  when driving); up/down climb ladders.
-- **Buttons on the right** show only when they do something: **JUMP**,
-  **SHOOT** (hold), **WEAPON** (switch), **SWAP** (survivor) and **USE**
-  (hotwire a car).
-- **II** pauses (Resume, Leave level, Touch controls, Fullscreen, Quit to title).
-- Tapping a text box opens the phone's keyboard.
-
-Touch controls appear automatically on phones and tablets, and on a computer
-as soon as you touch its screen (they hide again when you use the keyboard).
-Settings -> **Touch controls: Auto / On / Off** changes that.
-
-## Controls
-
-| Action | Keyboard | Gamepad |
-|---|---|---|
-| Move / steer | A D or ← → | Left stick / D-pad |
-| Jump | Space, W or ↑ | A |
-| Shoot / swing the held weapon | F, J or Ctrl | X |
-| Switch weapon | Q / E, or 1-6 | LB / RB |
-| Switch survivor | Tab | Y |
-| Hotwire a car | E | B |
-| Pause (and leave a level from the pause menu) | Esc | Start |
-
-## The party
-
-| Role | Perk |
-|---|---|
-| Scout | Runs faster, jumps higher, finds extra loot |
-| Cook (unlockable) | The party eats 40% less food |
-| Thief (unlockable) | Finds extra money in crates and events |
-| Gunner | Double damage, shoots faster |
-| Medic | Medkits heal and revive much more |
-| Mechanic | Uses less fuel, better repairs, hotwires cars fast |
-
-A downed survivor stays down until you use a medkit on them from the map.
-
-## Automated check
-
-Plays every screen of the core loop headless and checks the rules:
-
-```bash
-godot --headless --path . -s res://scripts/tests/smoke_test.gd
-```
-
-It prints `SMOKE TEST PASSED` and exits with code 0 when everything works.
-The Worker has its own tests: `cd leaderboard-api && npm test`.
-
-## Project layout
-
-| Folder | What's inside |
-|---|---|
-| `scenes/` | One small scene per screen (title, town, map, road, scavenge, end) |
-| `scripts/core/` | Autoloads (`Trip` run state, `Controls` input, `Mobile` phone support), touch controls, pause menu, phone typing, input safety, pixel art, UI helpers, backdrop |
-| `scripts/trip/` | Survivors, apocalypses, routes, regions, road events, flavor text |
-| `scripts/meta/` | Awards and unlocks (`unlocks.gd`), and the `Progress` autoload that saves them |
-| `scripts/screens/` | The code for each screen, plus the map painter |
-| `scripts/road/` | Enemies on the road |
-| `scripts/scavenge/` | Level generator, player, enemies, bosses, weapons and shots for scavenging levels |
-| `scripts/net/` | Talking to the online services (leaderboard, suggestions, online progress, Google sign-in) |
-| `scripts/tests/` | The smoke test |
-| `web/` | `update.js`, copied into the web build to keep it up to date |
-| `icons/` | The app icon (pixel-art car) at the sizes the installed app needs |
-| `leaderboard-api/` | The Cloudflare Worker for the leaderboard and suggestions, with its own tests |
-
-All art is placeholder pixel art drawn from code, so there are no image files yet.
-
-## Coming next
-
-- Online co-op (a friend plays one of your survivors), reusing the 6-digit-code
-  lobby from FindGame/Mythriven.
-- The other routes.
-
-## Security
-
-Everything players type, and everything the game receives from the internet,
-is cleaned and checked on both the game side and the Worker side. There's no
-SQL database anywhere, and if one is ever added it must use parameterized
-queries. Details, and the tests that prove it, are in [`SECURITY.md`](SECURITY.md).
-
-## Copyright and credits
-
-Copyright (c) 2026 Zephino. All Rights Reserved. See [`LICENSE`](LICENSE): you
-may play official builds, but not copy, change, share or sell the game without
-permission.
-
-Outside tools (currently just the Godot engine, MIT license) are listed in
-[`CREDITS.md`](CREDITS.md). Everything else (code, pixel art, names, events
-and text) was made for this game.
-
-## Version and changes
-
-The current version is in [`VERSION`](VERSION) (also shown on the title
-screen). Every change is listed in [`CHANGELOG.md`](CHANGELOG.md), newest first.
-
+*Version: see the title screen, or [`VERSION`](VERSION). What's new:
+[`CHANGELOG.md`](CHANGELOG.md).*
+*Copyright (c) 2026 Zephino. All Rights Reserved ([`LICENSE`](LICENSE)).
+Made with the Godot Engine ([`CREDITS.md`](CREDITS.md)).*
+*Making changes to the game? See [`DEVELOPERS.md`](DEVELOPERS.md).*
